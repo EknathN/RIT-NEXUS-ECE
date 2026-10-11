@@ -12,8 +12,23 @@ import {
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ritece_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    const token = localStorage.getItem('ritece_token');
+    const savedUser = localStorage.getItem('ritece_user');
+    // If a token exists but user data is not yet cached, wait for getMe()
+    if (token && !savedUser) {
+      return true;
+    }
+    return false;
+  });
   const [unconfirmedEmail, setUnconfirmedEmail] = useState(null);
 
   useEffect(() => {
@@ -22,10 +37,29 @@ export function AuthProvider({ children }) {
     if (token) {
       authAPI.getMe()
         .then(userData => {
-          setUser(userData);
+          const u = userData?.user || userData;
+          if (u && (u.id || u.email)) {
+            setUser(u);
+            localStorage.setItem('ritece_user', JSON.stringify(u));
+          }
         })
-        .catch(() => {
-          localStorage.removeItem('ritece_token');
+        .catch(err => {
+          console.warn('Session verification notice:', err.message);
+          // Only invalidate session if token is explicitly rejected (401 / 403 / invalid)
+          const isAuthError = err?.message && (
+            err.message.includes('401') ||
+            err.message.includes('403') ||
+            err.message.includes('Invalid or expired') ||
+            err.message.includes('Access token') ||
+            err.message.includes('User not found') ||
+            err.message.includes('jwt expired') ||
+            err.message.includes('invalid signature')
+          );
+          if (isAuthError) {
+            localStorage.removeItem('ritece_token');
+            localStorage.removeItem('ritece_user');
+            setUser(null);
+          }
         })
         .finally(() => setLoading(false));
     } else {
@@ -72,6 +106,7 @@ export function AuthProvider({ children }) {
     // Authenticate with backend API
     const data = await authAPI.login({ email: normalized, password });
     localStorage.setItem('ritece_token', data.token);
+    localStorage.setItem('ritece_user', JSON.stringify(data.user));
     setUser(data.user);
     setUnconfirmedEmail(null);
     return data.user;
@@ -113,6 +148,7 @@ export function AuthProvider({ children }) {
     const data = await authAPI.register({ ...userData, email: normalized });
     if (!requiresConfirmation) {
       localStorage.setItem('ritece_token', data.token);
+      localStorage.setItem('ritece_user', JSON.stringify(data.user));
       setUser(data.user);
     }
     return { user: data.user, requiresConfirmation };
@@ -131,12 +167,17 @@ export function AuthProvider({ children }) {
       await supabase.auth.signOut();
     } catch (_) {}
     localStorage.removeItem('ritece_token');
+    localStorage.removeItem('ritece_user');
     setUser(null);
     setUnconfirmedEmail(null);
   };
 
   const updateUser = (updates) => {
-    setUser(prev => ({ ...prev, ...updates }));
+    setUser(prev => {
+      const updated = { ...prev, ...updates };
+      localStorage.setItem('ritece_user', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (
