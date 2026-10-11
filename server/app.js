@@ -27,27 +27,55 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Middleware
-app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
+// Trust proxy for Vercel and reverse proxies
+app.set('trust proxy', 1);
+
+// Conditionally enable helmet when not in serverless to prevent header errors
+if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
+}
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting (skip in test or adjust for serverless)
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 1000,
-  standardHeaders: true,
-  legacyHeaders: false,
+// Normalize URL path from Vercel rewrite headers
+app.use((req, res, next) => {
+  if (req.headers['x-matched-path']) {
+    req.url = req.headers['x-matched-path'];
+  } else if (!req.url.startsWith('/api')) {
+    req.url = '/api' + (req.url.startsWith('/') ? req.url : '/' + req.url);
+  }
+  next();
 });
-app.use('/api/', limiter);
+
+// Rate limiting (standalone server only)
+if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 1000,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false },
+  });
+  app.use('/api/', limiter);
+}
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Initialize database
-initDatabase();
-autoCheckGraduationStatus();
+try {
+  initDatabase();
+  autoCheckGraduationStatus();
+} catch (e) {
+  console.error('Database startup warning:', e.message);
+}
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -64,9 +92,15 @@ app.use('/api/admin', authenticateToken, adminRoutes);
 app.use('/api/search', authenticateToken, searchRoutes);
 app.use('/api/projects', authenticateToken, projectRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Fallback 404 handler for unmatched API routes
+app.use((req, res) => {
+  res.status(404).json({ error: `Not found: ${req.method} ${req.originalUrl || req.url}` });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('API Error:', err);
+  res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
 export default app;
