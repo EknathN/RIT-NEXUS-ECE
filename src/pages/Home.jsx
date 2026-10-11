@@ -71,6 +71,7 @@ export default function Home() {
   const imageInputRef = useRef(null);
   const docInputRef = useRef(null);
   const videoInputRef = useRef(null);
+  const reactionTimerRef = useRef(null);
 
   useEffect(() => {
     loadFeed();
@@ -191,30 +192,41 @@ export default function Home() {
   };
 
   const handleReaction = async (postId, type) => {
-    try {
-      const result = await postsAPI.reactToPost(postId, type);
-      setPosts(prev => prev.map(p => {
-        if (p.id === postId || p._id === postId) {
-          const newReactionCounts = { ...(p.reactionCounts || {}) };
-          if (result?.removed) {
-            if (newReactionCounts[p.userReaction]) newReactionCounts[p.userReaction]--;
-            return { ...p, userReaction: null, likes_count: Math.max(0, (p.likes_count || 1) - 1), reactionCounts: newReactionCounts };
+    // 1. Optimistic UI update
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId || p._id === postId) {
+        const isSame = p.userReaction === type;
+        const newReactionCounts = { ...(p.reactionCounts || {}) };
+        if (isSame) {
+          if (newReactionCounts[type]) newReactionCounts[type] = Math.max(0, newReactionCounts[type] - 1);
+          return {
+            ...p,
+            userReaction: null,
+            likes_count: Math.max(0, (p.likes_count || 1) - 1),
+            reactionCounts: newReactionCounts,
+          };
+        } else {
+          if (p.userReaction && newReactionCounts[p.userReaction]) {
+            newReactionCounts[p.userReaction] = Math.max(0, newReactionCounts[p.userReaction] - 1);
           }
-          if (p.userReaction && p.userReaction !== type) {
-            if (newReactionCounts[p.userReaction]) newReactionCounts[p.userReaction]--;
-          }
+          newReactionCounts[type] = (newReactionCounts[type] || 0) + 1;
           return {
             ...p,
             userReaction: type,
             likes_count: p.userReaction ? p.likes_count : (p.likes_count || 0) + 1,
-            reactionCounts: { ...newReactionCounts, [type]: (newReactionCounts[type] || 0) + 1 }
+            reactionCounts: newReactionCounts,
           };
         }
-        return p;
-      }));
-      setShowReactions(null);
+      }
+      return p;
+    }));
+    setShowReactions(null);
+
+    // 2. Network sync in background
+    try {
+      await postsAPI.reactToPost(postId, type);
     } catch (err) {
-      toast.show('Failed to react', 'error');
+      console.warn('Reaction background sync notice:', err.message);
     }
   };
 
@@ -760,8 +772,15 @@ export default function Home() {
                     <div className="post-actions">
                       <div
                         className="post-action-wrapper"
-                        onMouseEnter={() => setShowReactions(pId)}
-                        onMouseLeave={() => setShowReactions(null)}
+                        onMouseEnter={() => {
+                          clearTimeout(reactionTimerRef.current);
+                          setShowReactions(pId);
+                        }}
+                        onMouseLeave={() => {
+                          reactionTimerRef.current = setTimeout(() => {
+                            setShowReactions(null);
+                          }, 320);
+                        }}
                       >
                         <button
                           className={`post-action ${post.userReaction ? 'reacted' : ''}`}

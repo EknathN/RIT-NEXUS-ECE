@@ -47,6 +47,66 @@ router.get('/unread-count', (req, res) => {
   }
 });
 
+// Get unified badge counts for all navigation tabs (Phone & Web)
+router.get('/badge-counts', (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 1. Unread notifications
+    const notifications = findWhere('notifications', n => n.user_id === userId && !n.is_read).length;
+
+    // 2. Unread direct messages
+    const myConversations = findWhere('conversations', c =>
+      c.participant1_id === userId || c.participant2_id === userId
+    );
+    let messages = 0;
+    myConversations.forEach(conv => {
+      messages += findWhere('messages', m =>
+        m.conversation_id === conv.id && m.sender_id !== userId && !m.is_read
+      ).length;
+    });
+
+    // 3. Pending connection requests received
+    const network = findWhere('connections', c =>
+      c.receiver_id === userId && c.status === 'pending'
+    ).length;
+
+    // 4. Communities / Circles (recent activity in user's circles)
+    const myCommunities = findWhere('communities', c =>
+      Array.isArray(c.members) && c.members.includes(userId)
+    );
+    let communities = 0;
+    if (myCommunities.length > 0) {
+      const commIds = new Set(myCommunities.map(c => c.id));
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const recentMsgs = findWhere('community_messages', m =>
+        commIds.has(m.community_id) && m.user_id !== userId && m.created_at > oneDayAgo
+      );
+      communities = Math.min(recentMsgs.length, 9);
+    }
+
+    // 5. Jobs & Internships (new opportunities in last 72 hours)
+    const threeDaysAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
+    const jobs = findWhere('jobs', j => j.created_at > threeDaysAgo).length;
+
+    // 6. Projects (new project bank entries in last 72 hours)
+    const projects = findWhere('projects', p => p.created_at > threeDaysAgo).length;
+
+    res.json({
+      notifications,
+      messages,
+      network,
+      communities,
+      jobs,
+      projects,
+      success: true,
+    });
+  } catch (err) {
+    console.error('Badge counts error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Mark as read
 router.put('/:id/read', (req, res) => {
   try {

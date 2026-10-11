@@ -379,10 +379,9 @@
   color: var(--accent-400);
 }
 
-/* ---- Reaction Picker Popup ---- */
 .reaction-picker {
   position: absolute;
-  bottom: calc(100% + 4px);
+  bottom: calc(100% + 2px);
   left: 0;
   display: flex;
   gap: 4px;
@@ -393,6 +392,17 @@
   box-shadow: var(--card-shadow-elevated);
   animation: dropdown-in 0.15s ease-out;
   z-index: 20;
+}
+
+/* Invisible bridge preventing cursor from dropping hover state */
+.reaction-picker::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: transparent;
 }
 
 .reaction-picker-item {

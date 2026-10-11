@@ -190,6 +190,7 @@ export const eventsAPI = {
 export const notificationsAPI = {
   getAll: (params = {}) => request(`/notifications?${new URLSearchParams(params)}`),
   getUnreadCount: () => request('/notifications/unread-count'),
+  getBadgeCounts: () => request('/notifications/badge-counts'),
   markAsRead: (id) => request(`/notifications/${id}/read`, { method: 'PUT' }),
   markAllAsRead: () => request('/notifications/read-all', { method: 'PUT' }),
 };

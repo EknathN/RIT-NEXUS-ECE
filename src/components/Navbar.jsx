@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useBadges } from '../contexts/BadgeContext';
 import { Home, Users, Briefcase, Rocket, MessageCircle, Bell, Search, Settings, LogOut, Moon, Sun, Monitor, Shield, Calendar, User, ChevronDown, Edit3, Cpu, X } from 'lucide-react';
 import { notificationsAPI, messagesAPI } from '../services/api';
 import RITLogo from './RITLogo';
@@ -14,30 +15,15 @@ export default function Navbar() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfile, setShowProfile] = useState(false);
-  const [unreadNotifs, setUnreadNotifs] = useState(0);
-  const [unreadMessages, setUnreadMessages] = useState(0);
+  const { badges } = useBadges();
+  const unreadNotifs = badges.notifications || 0;
+  const unreadMessages = badges.messages || 0;
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const profileRef = useRef(null);
 
   useEffect(() => {
     setIsMobileSearchOpen(false);
   }, [location.pathname]);
-
-  useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const [notifs, msgs] = await Promise.all([
-          notificationsAPI.getUnreadCount(),
-          messagesAPI.getUnreadCount(),
-        ]);
-        setUnreadNotifs(notifs.count);
-        setUnreadMessages(msgs.count);
-      } catch (e) {}
-    };
-    fetchCounts();
-    const interval = setInterval(fetchCounts, 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -59,11 +45,11 @@ export default function Navbar() {
 
   const navItems = [
     { path: '/home', icon: Home, label: 'Home' },
-    { path: '/network', icon: Users, label: 'Mentors & Network' },
-    { path: '/projects', icon: Cpu, label: 'Project Bank' },
-    { path: '/jobs', icon: Briefcase, label: 'Opportunities' },
+    { path: '/network', icon: Users, label: 'Mentors & Network', badgeKey: 'network' },
+    { path: '/projects', icon: Cpu, label: 'Project Bank', badgeKey: 'projects' },
+    { path: '/jobs', icon: Briefcase, label: 'Opportunities', badgeKey: 'jobs' },
     { path: '/hackathons', icon: Rocket, label: 'Hackathons' },
-    { path: '/communities', icon: Users, label: 'Communities' },
+    { path: '/communities', icon: Users, label: 'Communities', badgeKey: 'communities' },
   ];
 
   const getInitials = (name) => {
@@ -92,17 +78,23 @@ export default function Navbar() {
         </div>
 
         <div className="navbar-center">
-          {navItems.map(item => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
-              title={item.label}
-            >
-              <item.icon size={20} />
-              <span className="nav-label">{item.label}</span>
-            </Link>
-          ))}
+          {navItems.map(item => {
+            const count = item.badgeKey ? badges[item.badgeKey] : 0;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
+                title={item.label}
+              >
+                <div style={{ position: 'relative', display: 'inline-flex' }}>
+                  <item.icon size={20} />
+                  {count > 0 && <span className="nav-badge nav-item-badge">{count > 99 ? '99+' : count}</span>}
+                </div>
+                <span className="nav-label">{item.label}</span>
+              </Link>
+            );
+          })}
         </div>
 
         <div className="navbar-right">

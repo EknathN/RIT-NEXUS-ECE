@@ -32,10 +32,10 @@ export default function Messages() {
     if (activePartner) {
       const partnerId = activePartner._id || activePartner.id;
       loadMessages(partnerId);
-      // Polling for new messages every 4 seconds
+      // Fast polling for incoming messages every 2.5 seconds
       const interval = setInterval(() => {
         loadMessages(partnerId, true);
-      }, 4000);
+      }, 2500);
       return () => clearInterval(interval);
     }
   }, [activePartner]);
@@ -108,19 +108,49 @@ export default function Messages() {
     if (!text.trim() || !activePartner) return;
 
     const messageText = text.trim();
+    const partnerId = activePartner._id || activePartner.id;
     setText('');
-    setSending(true);
+
+    // Instant optimistic message shown immediately
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: tempId,
+      _id: tempId,
+      sender_id: user?.id,
+      receiver_id: partnerId,
+      content: messageText,
+      created_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      sender: {
+        id: user?.id,
+        _id: user?.id,
+        full_name: user?.full_name,
+        fullName: user?.full_name,
+        profile_photo: user?.profile_photo || user?.avatar,
+        avatar: user?.profile_photo || user?.avatar,
+      },
+    };
+
+    setMessages(prev => [...prev, optimisticMsg]);
+    setConversations(prev => prev.map(c => {
+      const isCurrent = (c.partner?.id === partnerId || c.partner?._id === partnerId || c.other?.id === partnerId);
+      if (isCurrent) {
+        return {
+          ...c,
+          lastMessage: { content: messageText, createdAt: new Date().toISOString() },
+        };
+      }
+      return c;
+    }));
 
     try {
-      const partnerId = activePartner._id || activePartner.id;
       const res = await messagesAPI.sendMessage(partnerId, { content: messageText });
       const newMsg = res.message || res;
-      setMessages(prev => [...prev, newMsg]);
+      setMessages(prev => prev.map(m => m.id === tempId ? newMsg : m));
       loadConversations();
     } catch (err) {
       toast.show('Failed to send message', 'error');
-    } finally {
-      setSending(false);
+      setMessages(prev => prev.filter(m => m.id !== tempId));
     }
   };
 

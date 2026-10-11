@@ -179,6 +179,29 @@ export default function Communities() {
     }
   };
 
+  // Live background polling for channel messages without page reload
+  useEffect(() => {
+    if (!activeChannel || !selectedCommunity || activeChannel.type === 'voice') return;
+    const commId = selectedCommunity._id || selectedCommunity.id;
+    const chId = activeChannel.id || activeChannel.slug;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await communitiesAPI.getMessages(commId, chId);
+        if (res && Array.isArray(res.messages)) {
+          setMessages(prev => {
+            if (res.messages.length !== prev.length || (res.messages[res.messages.length - 1]?.id !== prev[prev.length - 1]?.id)) {
+              return res.messages;
+            }
+            return prev;
+          });
+        }
+      } catch (_) {}
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [activeChannel, selectedCommunity]);
+
   // Scroll to bottom on new messages
   useEffect(() => {
     if (!loadingMessages) {
@@ -220,7 +243,29 @@ export default function Communities() {
     const chId = activeChannel.id || activeChannel.slug;
     const text = inputMessage.trim();
     setInputMessage('');
-    setSending(true);
+
+    // Optimistic message shown instantly
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: tempId,
+      _id: tempId,
+      content: text,
+      type: activeChannel.type === 'announcement' ? 'announcement' : 'text',
+      reply_to: replyingTo ? { id: replyingTo.id, author: replyingTo.author?.full_name, content: replyingTo.content?.slice(0, 60) } : null,
+      created_at: new Date().toISOString(),
+      author: {
+        id: user?.id,
+        _id: user?.id,
+        full_name: user?.full_name || 'You',
+        fullName: user?.full_name || 'You',
+        profile_photo: user?.profile_photo || user?.avatar,
+        avatar: user?.profile_photo || user?.avatar,
+        headline: user?.headline,
+        verification_status: user?.verification_status,
+      }
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+    setReplyingTo(null);
 
     try {
       const res = await communitiesAPI.sendMessage(commId, chId, {
@@ -228,16 +273,11 @@ export default function Communities() {
         type: activeChannel.type === 'announcement' ? 'announcement' : 'text',
         reply_to: replyingTo ? { id: replyingTo.id, author: replyingTo.author?.full_name, content: replyingTo.content?.slice(0, 60) } : null
       });
-      const newMsg = res.message;
-      setMessages(prev => {
-        if (prev.some(m => m.id === newMsg.id || m._id === newMsg.id)) return prev;
-        return [...prev, newMsg];
-      });
-      setReplyingTo(null);
+      const newMsg = res.message || res;
+      setMessages(prev => prev.map(m => m.id === tempId ? newMsg : m));
     } catch (err) {
       toast.show('Failed to send message', 'error');
-    } finally {
-      setSending(false);
+      setMessages(prev => prev.filter(m => m.id !== tempId));
     }
   };
 

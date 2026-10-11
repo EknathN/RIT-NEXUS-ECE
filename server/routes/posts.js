@@ -150,59 +150,64 @@ router.post('/', (req, res) => {
 });
 
 // React to post
-router.post('/:id/react', (req, res) => {
+const handlePostReaction = (req, res) => {
   try {
-    const { type } = req.body;
-    const post = findById('posts', req.params.id);
+    const { type = 'like' } = req.body || {};
+    const post = findById('posts', req.params.id) || findOne('posts', { id: req.params.id });
     if (!post) return res.status(404).json({ error: 'Post not found' });
     
-    const existing = findOne('reactions', { post_id: req.params.id, user_id: req.user.id });
+    const existing = findOne('reactions', { post_id: post.id, user_id: req.user.id });
     
     if (existing) {
       if (existing.type === type) {
-        // Remove reaction
+        // Toggle off reaction
         remove('reactions', existing.id);
-        update('posts', post.id, { likes_count: Math.max(0, (post.likes_count || 0) - 1) });
-        return res.json({ removed: true });
+        const newLikes = Math.max(0, (post.likes_count || 1) - 1);
+        update('posts', post.id, { likes_count: newLikes });
+        return res.json({ removed: true, likes_count: newLikes, success: true });
       } else {
         // Change reaction type
         update('reactions', existing.id, { type });
-        return res.json({ type });
+        return res.json({ type, likes_count: post.likes_count || 1, success: true });
       }
     }
     
     const reaction = {
       id: uuidv4(),
       user_id: req.user.id,
-      post_id: req.params.id,
+      post_id: post.id,
       type: type || 'like',
       created_at: new Date().toISOString(),
     };
     insert('reactions', reaction);
-    update('posts', post.id, { likes_count: (post.likes_count || 0) + 1 });
+    const newLikes = (post.likes_count || 0) + 1;
+    update('posts', post.id, { likes_count: newLikes });
     
     // Create notification
     if (post.user_id !== req.user.id) {
       const reactor = findById('users', req.user.id);
+      const reactorName = reactor ? (reactor.full_name || reactor.fullName) : 'An ECE member';
       insert('notifications', {
         id: uuidv4(),
         user_id: post.user_id,
         from_user_id: req.user.id,
         type: 'reaction',
         title: 'New Reaction',
-        message: `${reactor.full_name} reacted to your post`,
-        link: `/post/${post.id}`,
+        message: `${reactorName} reacted to your post`,
+        link: `/home`,
         is_read: 0,
         created_at: new Date().toISOString(),
       });
     }
     
-    res.json({ type });
+    res.json({ type: type || 'like', likes_count: newLikes, success: true });
   } catch (err) {
     console.error('React error:', err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error reacting to post' });
   }
-});
+};
+router.post('/:id/react', handlePostReaction);
+router.post('/:id/like', handlePostReaction);
 
 // Comment on post
 router.post(['/:id/comments', '/:id/comment'], (req, res) => {
