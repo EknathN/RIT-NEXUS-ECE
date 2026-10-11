@@ -136,54 +136,15 @@ export const defaultData = {
   "projects": [],
   "certifications": [],
   "achievements": [],
-  "connections": [
-    {
-      "id": "4a3da680-e876-4a9c-a63c-169881708510",
-      "sender_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
-      "receiver_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
-      "status": "pending",
-      "created_at": "2026-10-11T09:19:30.424Z",
-      "updated_at": "2026-10-11T09:19:30.424Z"
-    }
-  ],
+  "connections": [],
   "followers": [],
   "posts": [],
   "reactions": [],
   "comments": [],
   "saved_posts": [],
-  "conversations": [
-    {
-      "id": "8ee11d27-a6dc-4d78-b38f-50756c16861e",
-      "user1_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
-      "user2_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
-      "last_message": "[Ask a Senior • Project Guidance & ECE Course Prep] Hello Eknath Nuvvula, I am an ECE student at RIT. I saw your expertise in Embedded Systems & IoT and would love your advice and mentorship guidance.",
-      "last_message_at": "2026-10-11T09:19:30.424Z",
-      "created_at": "2026-10-11T09:19:30.424Z"
-    }
-  ],
-  "messages": [
-    {
-      "id": "4129da3f-deb7-43d7-99f4-d7b935f24085",
-      "conversation_id": "8ee11d27-a6dc-4d78-b38f-50756c16861e",
-      "sender_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
-      "content": "🎓 **[Ask a Senior Guidance Request]**\n**Topic:** Project Guidance & ECE Course Prep\n**Domain:** Embedded Systems & IoT\n\nHello Eknath Nuvvula, I am an ECE student at RIT. I saw your expertise in Embedded Systems & IoT and would love your advice and mentorship guidance.",
-      "is_read": 0,
-      "created_at": "2026-10-11T09:19:30.424Z"
-    }
-  ],
-  "notifications": [
-    {
-      "id": "a6531dcc-6cbe-4945-b525-25f5d9e60e4c",
-      "user_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
-      "from_user_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
-      "type": "mentorship_request",
-      "title": "Ask a Senior: Guidance in Project Guidance & ECE Course Prep",
-      "message": "Eknath Nuvvula asked for your mentorship guidance on: \"Project Guidance & ECE Course Prep\"",
-      "link": "/messages/403c258b-257f-45ee-b3b3-9344d34fc0cf",
-      "is_read": 0,
-      "created_at": "2026-10-11T09:19:30.424Z"
-    }
-  ],
+  "conversations": [],
+  "messages": [],
+  "notifications": [],
   "jobs": [],
   "hackathons": [],
   "incubation_programs": [],

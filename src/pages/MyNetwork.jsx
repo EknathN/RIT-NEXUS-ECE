@@ -211,7 +211,11 @@ export default function MyNetwork() {
   // Filter users
   const filterList = (list) => {
     if (!Array.isArray(list)) return [];
+    const myId = user?.id || user?._id;
     return list.filter(u => {
+      // Never show logged-in user in mentors, discover peers, or suggestions
+      if (myId && (u.id === myId || u._id === myId)) return false;
+
       const name = u.full_name || u.fullName || '';
       const headline = u.headline || '';
       const company = u.current_company || '';
@@ -323,32 +327,7 @@ export default function MyNetwork() {
         </button>
       </div>
 
-      {/* Mentor Circles Filter Pills (Shown on Mentors / Suggestions / Alumni) */}
-      {(activeTab === 'mentors' || activeTab === 'suggestions' || activeTab === 'alumni') && (
-        <div style={{ marginBottom: 'var(--space-5)' }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 'var(--space-2)' }}>
-            Filter by ECE Domain Circle:
-          </div>
-          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-            {ECE_CIRCLES.map(circle => (
-              <button
-                key={circle}
-                onClick={() => setSelectedCircle(circle)}
-                className={`btn btn-sm ${selectedCircle === circle ? 'btn-primary' : 'btn-outline'}`}
-                style={{
-                  borderRadius: 'var(--radius-full)',
-                  whiteSpace: 'nowrap',
-                  fontSize: '0.82rem',
-                }}
-              >
-                {circle}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Search and Secondary Filter Row */}
+      {/* Search and Filter Row with Circle Dropdown */}
       <div className="card" style={{ marginBottom: 'var(--space-6)', padding: 'var(--space-4)' }}>
         <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
@@ -361,6 +340,23 @@ export default function MyNetwork() {
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ paddingLeft: '38px' }}
             />
+          </div>
+
+          {/* ECE Domain Circle Dropdown */}
+          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+            <select
+              className="form-select"
+              value={selectedCircle}
+              onChange={(e) => setSelectedCircle(e.target.value)}
+              style={{ width: 'auto', minWidth: '170px' }}
+              title="Filter by ECE Domain Circle"
+            >
+              {ECE_CIRCLES.map(circle => (
+                <option key={circle} value={circle}>
+                  {circle === 'All Circles' ? 'All ECE Circles' : circle}
+                </option>
+              ))}
+            </select>
           </div>
 
           {activeTab !== 'alumni' && (

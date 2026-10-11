@@ -200,6 +200,7 @@ router.delete('/:id', (req, res) => {
 router.get('/sent', (req, res) => {
   try {
     const sent = findAll('connections', { sender_id: req.user.id, status: 'pending' })
+      .filter(conn => conn.receiver_id !== req.user.id)
       .map(conn => {
         const receiver = findById('users', conn.receiver_id);
         return {
@@ -229,6 +230,7 @@ router.get('/sent', (req, res) => {
 router.get('/pending', (req, res) => {
   try {
     const pending = findAll('connections', { receiver_id: req.user.id, status: 'pending' })
+      .filter(conn => conn.sender_id !== req.user.id)
       .map(conn => {
         const sender = findById('users', conn.sender_id);
         return {
@@ -385,7 +387,7 @@ router.get('/suggestions', (req, res) => {
 router.get('/mentors', (req, res) => {
   try {
     const { circle, role, company } = req.query;
-    const users = findAll('users').filter(u => u.role !== 'admin' && (u.is_active === 1 || u.is_active === true || u.is_active === undefined));
+    const users = findAll('users').filter(u => u.id !== req.user.id && u.role !== 'admin' && (u.is_active === 1 || u.is_active === true || u.is_active === undefined));
     
     let mentors = users.map(u => {
       let skills = findAll('skills', { user_id: u.id }).map(s => s.name);
