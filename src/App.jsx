@@ -19,6 +19,7 @@ import Events from './pages/Events';
 import Search from './pages/Search';
 import Settings from './pages/Settings';
 import AdminDashboard from './pages/AdminDashboard';
+import ProjectBank from './pages/ProjectBank';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -40,7 +41,7 @@ export default function App() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
         <div style={{ textAlign: 'center' }}>
           <div className="loading-pulse" style={{ width: 60, height: 60, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-500), var(--cyan-500))', margin: '0 auto 16px' }} />
-          <p style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Loading RIT ECE...</p>
+          <p style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Loading RIT ECE Nexus...</p>
         </div>
       </div>
     );
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="/profile/:id" element={<PrivateRoute><Profile /></PrivateRoute>} />
             <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
             <Route path="/network" element={<PrivateRoute><MyNetwork /></PrivateRoute>} />
+            <Route path="/projects" element={<PrivateRoute><ProjectBank /></PrivateRoute>} />
             <Route path="/jobs" element={<PrivateRoute><JobsInternships /></PrivateRoute>} />
             <Route path="/hackathons" element={<PrivateRoute><HackathonsIncubation /></PrivateRoute>} />
             <Route path="/communities" element={<PrivateRoute><Communities /></PrivateRoute>} />

@@ -141,7 +141,7 @@ export default function Home() {
       setPosts(prev => [post, ...prev]);
       setNewPost('');
       setMediaAttachment(null);
-      toast.show('Post published to RIT ECE network!', 'success');
+      toast.show('Post published to RIT ECE Nexus network!', 'success');
     } catch (err) {
       toast.show('Failed to create post', 'error');
     } finally {
@@ -318,7 +318,7 @@ export default function Home() {
       if (navigator.share) {
         try {
           await navigator.share({
-            title: 'RIT ECE Network Post',
+            title: 'RIT ECE Nexus Post',
             text: post.content?.slice(0, 100),
             url: shareUrl,
           });
@@ -344,18 +344,7 @@ export default function Home() {
   const userDisplayName = user?.full_name || user?.fullName || 'ECE Member';
   const userHeadline = user?.headline || 'ECE Department • RIT Chennai';
 
-  const displayedPosts = posts.filter(post => {
-    if (feedTab === 'saved') {
-      return !!post.isSaved;
-    }
-    if (feedTab === 'my') {
-      const authorId = post.author?.id || post.author?._id || post.user_id;
-      return authorId === user?.id || authorId === user?._id;
-    }
-    return true;
-  });
-
-  const savedCount = posts.filter(p => p.isSaved).length;
+  const displayedPosts = posts;
 
   return (
     <div className="container">
@@ -365,8 +354,8 @@ export default function Home() {
           <div className="card profile-mini-card">
             <div className="profile-mini-cover" />
             <div className="profile-mini-content">
-              <div style={{ position: 'relative', width: 'fit-content', margin: '-28px auto 8px' }}>
-                <div className="avatar avatar-lg">
+              <div className="profile-mini-avatar-wrap">
+                <div className="profile-mini-avatar">
                   {user?.profile_photo || user?.avatar ? (
                     <img src={user.profile_photo || user.avatar} alt={userDisplayName} />
                   ) : (
@@ -384,20 +373,20 @@ export default function Home() {
                     background: 'var(--accent-500)',
                     color: '#fff',
                     borderRadius: '50%',
-                    width: 24,
-                    height: 24,
+                    width: 22,
+                    height: 22,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
-                    border: '2px solid var(--bg-card, #1e293b)',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                    border: '2px solid var(--card-bg)',
                     cursor: 'pointer',
                     transition: 'transform 0.15s ease',
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
                   onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                 >
-                  <Camera size={12} />
+                  <Camera size={11} />
                 </Link>
               </div>
               <Link to={`/profile/${user?.id || user?._id || ''}`} className="profile-mini-name">{userDisplayName}</Link>
@@ -405,54 +394,30 @@ export default function Home() {
                 <span className="verified-badge"><CheckCircle size={10} /></span>
               )}
               <p className="profile-mini-headline">{userHeadline}</p>
-              <div className="profile-mini-stats">
-                <div><strong>{user?.connections_count || user?.connectionCount || 0}</strong> Connections</div>
-                <div><strong>{user?.profile_completion || 75}%</strong> Profile</div>
+
+              <div className="profile-mini-stats-section">
+                <div className="profile-stat-row">
+                  <span>Connections</span>
+                  <strong>{user?.connections_count || user?.connectionCount || 0}</strong>
+                </div>
+                <div className="profile-stat-row">
+                  <span>Profile Strength</span>
+                  <strong>{user?.profile_completion || 75}%</strong>
+                </div>
+                <div className="progress-bar" style={{ margin: '4px 0 2px' }}>
+                  <div className="progress-bar-fill" style={{ width: `${user?.profile_completion || 75}%` }} />
+                </div>
               </div>
-              <div className="progress-bar" style={{ margin: '8px 0' }}>
-                <div className="progress-bar-fill" style={{ width: `${user?.profile_completion || 75}%` }} />
-              </div>
+
               <Link to="/edit-profile" className="btn btn-secondary btn-sm" style={{ width: '100%', marginTop: 8 }}>
                 Edit Profile
               </Link>
-              <button
-                className={`btn btn-sm ${feedTab === 'saved' ? 'btn-primary' : 'btn-outline'}`}
-                style={{ width: '100%', marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                onClick={() => setFeedTab('saved')}
-              >
-                <Bookmark size={14} /> Saved Posts {savedCount > 0 ? `(${savedCount})` : ''}
-              </button>
             </div>
           </div>
         </aside>
 
         {/* Center Feed */}
         <main className="home-feed">
-          {/* Feed Filter Tabs */}
-          <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-4)', background: 'var(--bg-secondary)', padding: '6px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-            <button
-              className={`btn btn-sm ${feedTab === 'all' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-              onClick={() => setFeedTab('all')}
-            >
-              <TrendingUp size={15} /> All Posts
-            </button>
-            <button
-              className={`btn btn-sm ${feedTab === 'saved' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-              onClick={() => setFeedTab('saved')}
-            >
-              <Bookmark size={15} /> Saved Posts {savedCount > 0 && <span className="badge badge-accent" style={{ fontSize: '0.72rem', padding: '1px 6px' }}>{savedCount}</span>}
-            </button>
-            <button
-              className={`btn btn-sm ${feedTab === 'my' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-              onClick={() => setFeedTab('my')}
-            >
-              <Users size={15} /> My Posts
-            </button>
-          </div>
-
           {/* Hidden File Inputs for Attachments */}
           <input
             type="file"
@@ -530,22 +495,23 @@ export default function Home() {
 
                   <div className="create-post-actions">
                     <div className="create-post-media">
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => imageInputRef.current?.click()}>
-                        <Image size={16} /> Photo
+                      <button type="button" className="media-trigger-btn" onClick={() => imageInputRef.current?.click()} title="Add photo or figure">
+                        <Image size={17} style={{ color: '#378fe9' }} /> Photo
                       </button>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => docInputRef.current?.click()}>
-                        <FileText size={16} /> Document
+                      <button type="button" className="media-trigger-btn" onClick={() => docInputRef.current?.click()} title="Add PDF paper, report, or document">
+                        <FileText size={17} style={{ color: '#f59e0b' }} /> Document
                       </button>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => videoInputRef.current?.click()}>
-                        <Video size={16} /> Video
+                      <button type="button" className="media-trigger-btn" onClick={() => videoInputRef.current?.click()} title="Add project demo video">
+                        <Video size={17} style={{ color: '#10b981' }} /> Video
                       </button>
                     </div>
                     <button
                       className="btn btn-primary btn-sm"
                       onClick={handleCreatePost}
                       disabled={posting || (!newPost.trim() && !mediaAttachment)}
+                      style={{ padding: '6px 18px', borderRadius: 'var(--radius-full)' }}
                     >
-                      <Send size={14} /> {posting ? 'Posting...' : 'Post'}
+                      <Send size={13} /> {posting ? 'Posting...' : 'Post'}
                     </button>
                   </div>
                 </div>

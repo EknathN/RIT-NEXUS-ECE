@@ -158,7 +158,48 @@
   gap: var(--space-4);
 }
 @media (max-width: 480px) {
-  .auth-card { padding: var(--space-6); }
-  .form-row { grid-template-columns: 1fr; }
-  .account-type-grid { grid-template-columns: 1fr; }
+  .auth-page { padding: 16px 12px; }
+  .auth-card { padding: 20px 14px; border-radius: var(--radius-xl); }
+  .auth-header { margin-bottom: var(--space-4); }
+  .auth-header h1 { font-size: 1.4rem; margin-top: var(--space-2); }
+  .form-row { grid-template-columns: 1fr; gap: 0; }
+  .account-type-grid { grid-template-columns: 1fr; gap: 10px; }
+  .account-type-card { padding: 14px; }
+}
+
+/* Mandatory Field Indicator & Error States */
+.form-input.input-error,
+.form-textarea.input-error,
+select.form-input.input-error {
+  border-color: var(--danger-500, #ef4444) !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3) !important;
+  background-color: rgba(239, 68, 68, 0.03);
+}
+
+.field-error-msg {
+  display: block;
+  font-size: 11px;
+  color: #ef4444;
+  margin-top: 4px;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.mandatory-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-weight: 600;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.mandatory-star {
+  color: #ef4444;
+  margin-left: 3px;
+  font-weight: 700;
 }

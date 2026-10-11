@@ -81,7 +81,7 @@ export default function Search() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: 'var(--space-12)' }}>
           <div className="loading-spinner" style={{ margin: '0 auto var(--space-4)' }} />
-          <p style={{ color: 'var(--text-secondary)' }}>Searching RIT ECE platform...</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Searching RIT ECE Nexus platform...</p>
         </div>
       ) : totalResults === 0 && query ? (
         <div className="card" style={{ textAlign: 'center', padding: 'var(--space-12)' }}>

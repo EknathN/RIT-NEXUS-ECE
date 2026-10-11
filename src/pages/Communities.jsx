@@ -8,8 +8,9 @@ import {
   Send, Smile, Paperclip, Code, X, Check, MoreVertical, Bell, 
   BellOff, Users, Shield, Award, Mic, MicOff, Headphones, 
   Monitor, Radio, FileText, Download, ExternalLink, ChevronDown, 
-  Sparkles, CornerDownRight, Trash2, Copy, CheckCircle2, User as UserIcon
+  Sparkles, CornerDownRight, Trash2, Copy, CheckCircle2, User as UserIcon, Menu, ArrowLeft
 } from 'lucide-react';
+import './Communities.css';
 
 export default function Communities() {
   const { user } = useAuth();
@@ -43,6 +44,7 @@ export default function Communities() {
   const [channelSearch, setChannelSearch] = useState('');
   const [mutedChannels, setMutedChannels] = useState({});
   const [selectedAnnouncementMsg, setSelectedAnnouncementMsg] = useState(null);
+  const [mobileTab, setMobileTab] = useState(() => (typeof window !== 'undefined' && window.innerWidth <= 768) ? 'channels' : 'chat'); // 'chat' | 'channels'
 
   // Voice Lounge State (Discord Voice Room)
   const [inVoiceRoom, setInVoiceRoom] = useState(false);
@@ -133,11 +135,17 @@ export default function Communities() {
     const commId = comm._id || comm.id;
     setLoadingChannels(true);
     try {
-      const res = await communitiesAPI.getChannels(commId);
-      const chList = res.channels || [];
+      const [chRes, commRes] = await Promise.all([
+        communitiesAPI.getChannels(commId),
+        communitiesAPI.getOne(commId).catch(() => null)
+      ]);
+      const chList = chRes?.channels || [];
       setChannels(chList);
+      if (commRes) {
+        setSelectedCommunity(commRes);
+      }
       if (chList.length > 0) {
-        handleSelectChannel(chList[0], commId);
+        handleSelectChannel(chList[0], commId, false);
       }
     } catch (err) {
       console.error('Error fetching channels:', err);
@@ -146,9 +154,12 @@ export default function Communities() {
     }
   };
 
-  const handleSelectChannel = async (channel, overrideCommId) => {
+  const handleSelectChannel = async (channel, overrideCommId, fromUserClick = true) => {
     setActiveChannel(channel);
     setReplyingTo(null);
+    if (fromUserClick) {
+      setMobileTab('chat');
+    }
     const commId = overrideCommId || (selectedCommunity?._id || selectedCommunity?.id);
     if (!commId) return;
 
@@ -390,14 +401,26 @@ export default function Communities() {
     ? messages.filter(m => (m.content || '').toLowerCase().includes(channelSearch.toLowerCase()) || (m.code_snippet || '').toLowerCase().includes(channelSearch.toLowerCase()))
     : messages;
 
+  if (loading && communities.length === 0) {
+    return (
+      <div className="communities-page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div className="loading-spinner" style={{ width: '36px', height: '36px', margin: '0 auto 12px' }} />
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600 }}>Loading Circles &amp; Community Channels...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ height: 'calc(100vh - var(--navbar-height, 64px))', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', overflow: 'hidden' }}>
-      
-      {/* 3-Panel Discord + WhatsApp Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '72px 260px 1fr ' + (showMembersSidebar ? '240px' : '0px'), height: '100%', overflow: 'hidden', transition: 'grid-template-columns 0.25s ease' }}>
+    <div className="communities-page-container">
+      {/* 4-Panel Discord + WhatsApp Layout */}
+      <div
+        className={`communities-grid ${mobileTab === 'channels' ? 'mobile-view-channels' : 'mobile-view-chat'}`}
+      >
         
         {/* PANEL 1: Leftmost Discord Server Rail */}
-        <div style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 0', gap: '10px', overflowY: 'auto' }}>
+        <div className="comm-rail-panel">
           
           {/* Main RIT ECE Server Hub Badge */}
           <div 
@@ -475,7 +498,7 @@ export default function Communities() {
         </div>
 
         {/* PANEL 2: Discord Channel Sidebar & WhatsApp Channel Info */}
-        <div style={{ background: 'var(--bg-tertiary)', borderRight: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+        <div className="comm-channels-panel">
           
           {/* Community Header & Join Status */}
           <div style={{ padding: 'var(--space-3) var(--space-4)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -645,11 +668,19 @@ export default function Communities() {
         </div>
 
         {/* PANEL 3: Active Channel Stage (Discord & WhatsApp Chat Feed) */}
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: 'var(--bg-primary)' }}>
+        <div className="comm-chat-panel">
           
           {/* Top Channel Header Bar */}
-          <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+          <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+              <button
+                type="button"
+                className="mobile-channels-toggle"
+                onClick={() => setMobileTab('channels')}
+                title="Back to Channels"
+              >
+                <ArrowLeft size={16} /> Channels
+              </button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 {activeChannel?.type === 'announcement' ? (
                   <Megaphone size={18} color="var(--violet-400)" />
@@ -658,7 +689,7 @@ export default function Communities() {
                 ) : (
                   <Hash size={18} color="var(--accent-500)" />
                 )}
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {activeChannel?.name || 'select-a-channel'}
                 </h3>
               </div>
@@ -674,9 +705,9 @@ export default function Communities() {
             </div>
 
             {/* Action Bar Tools */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="channel-action-tools" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {/* Channel Message Search */}
-              <div style={{ position: 'relative', width: '160px' }}>
+              <div className="channel-search-box" style={{ position: 'relative', width: '160px' }}>
                 <Search size={14} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 <input 
                   type="text" 
@@ -724,7 +755,25 @@ export default function Communities() {
           </div>
 
           {/* MAIN CHANNEL CONTENT */}
-          {activeChannel?.type === 'voice' ? (
+          {!activeChannel ? (
+            <div style={{ flex: 1, padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+              <div style={{ padding: '16px', borderRadius: '50%', background: 'rgba(0, 148, 255, 0.1)', color: 'var(--accent-500)', marginBottom: 'var(--space-3)' }}>
+                <Hash size={36} />
+              </div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '6px' }}>Select an ECE Channel</h3>
+              <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', maxWidth: '300px', marginBottom: 'var(--space-4)' }}>
+                Tap on any announcement, discussion, or voice lounge from the channels menu to start chatting.
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setMobileTab('channels')}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.85rem' }}
+              >
+                <ArrowLeft size={16} /> View Circles &amp; Channels
+              </button>
+            </div>
+          ) : activeChannel?.type === 'voice' ? (
             
             /* DISCORD VOICE LOUNGE COMPONENT */
             <div style={{ flex: 1, padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(circle at center, rgba(0, 148, 255, 0.08) 0%, rgba(10, 22, 40, 0.95) 100%)' }}>
@@ -766,22 +815,11 @@ export default function Communities() {
                     </div>
                   )}
 
-                  {/* Seeded Active Participants in Lab */}
-                  <div style={{ background: 'var(--bg-secondary)', padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div className="avatar-placeholder avatar-lg" style={{ marginBottom: '8px', border: '3px solid var(--accent-500)', boxShadow: '0 0 10px rgba(0, 148, 255, 0.4)' }}>
-                      AR
+                  {!inVoiceRoom && (
+                    <div style={{ gridColumn: '1 / -1', padding: 'var(--space-6)', color: 'var(--text-muted)', fontSize: '0.88rem', textAlign: 'center' }}>
+                      No active participants in this voice channel. Click &quot;Connect to Voice&quot; to begin.
                     </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>Arjun K</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--accent-500)', fontWeight: 600 }}>Active Speaker</span>
-                  </div>
-
-                  <div style={{ background: 'var(--bg-secondary)', padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div className="avatar-placeholder avatar-lg" style={{ marginBottom: '8px' }}>
-                      PV
-                    </div>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>Priya V</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Listening</span>
-                  </div>
+                  )}
                 </div>
 
                 {/* Voice Controls Dock (Discord Style) */}
@@ -1207,63 +1245,105 @@ export default function Communities() {
 
         {/* PANEL 4: Discord Server Members Directory (Collapsible) */}
         {showMembersSidebar && (
-          <div style={{ background: 'var(--bg-tertiary)', borderLeft: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', padding: 'var(--space-3) var(--space-3)' }}>
+          <div className="comm-members-panel">
             
-            <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--space-3)', paddingLeft: '4px' }}>
-              Community Members ({selectedCommunity?.members?.length || 1})
-            </h3>
+            {/* Real Community Members Directory */}
+            {(() => {
+              const membersList = (selectedCommunity?.memberDetails && selectedCommunity.memberDetails.length > 0)
+                ? selectedCommunity.memberDetails.map(m => ({
+                    id: m.user?.id || m.user_id,
+                    name: m.user?.full_name || 'Member',
+                    role: m.user?.role || m.role || 'Member',
+                    headline: m.user?.headline || 'RIT ECE',
+                    avatar: m.user?.profile_photo,
+                    initials: m.user?.full_name ? m.user.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'ME',
+                    isAdmin: m.user?.role === 'admin' || m.role === 'admin' || m.user?.account_type === 'faculty'
+                  }))
+                : user ? [{
+                    id: user.id,
+                    name: user.full_name || 'You',
+                    role: user.role || user.account_type || 'Member',
+                    headline: user.headline || 'RIT ECE Member',
+                    avatar: user.profile_photo,
+                    initials: user.full_name ? user.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'ME',
+                    isAdmin: user.role === 'admin'
+                  }] : [];
 
-            {/* Faculty & Core Admins */}
-            <div style={{ marginBottom: 'var(--space-4)' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-500)', textTransform: 'uppercase', marginBottom: '6px', paddingLeft: '4px' }}>
-                👑 Faculty &amp; Admins — 1
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)', marginBottom: '4px' }}>
-                <div style={{ position: 'relative' }}>
-                  <div className="avatar-placeholder avatar-sm" style={{ width: '28px', height: '28px', fontSize: '0.75rem' }}>
-                    AD
-                  </div>
-                  <div style={{ position: 'absolute', bottom: -1, right: -1, width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success-500)', border: '2px solid var(--bg-secondary)' }} />
-                </div>
-                <div style={{ overflow: 'hidden' }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    Dr. Faculty ECE
-                  </div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Lab Incharge</div>
-                </div>
-              </div>
-            </div>
+              const admins = membersList.filter(m => m.isAdmin);
+              const generalMembers = membersList.filter(m => !m.isAdmin);
 
-            {/* Students & Innovators */}
-            <div>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px', paddingLeft: '4px' }}>
-                💻 Online Students — 4
-              </div>
-              
-              {[
-                { name: user?.full_name || 'You', role: 'Student Innovator', tag: 'Online', initials: user?.full_name?.slice(0, 2).toUpperCase() || 'ME' },
-                { name: 'Arjun K', role: 'Embedded Systems Lead', tag: 'In Lab', initials: 'AK' },
-                { name: 'Priya V', role: 'AI & VLSI Researcher', tag: 'Online', initials: 'PV' },
-                { name: 'Rahul S', role: 'Robotics Club Head', tag: 'Coding', initials: 'RS' }
-              ].map((m, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px', borderRadius: 'var(--radius-md)', marginBottom: '2px', cursor: 'pointer' }}>
-                  <div style={{ position: 'relative' }}>
-                    <div className="avatar-placeholder avatar-sm" style={{ width: '28px', height: '28px', fontSize: '0.75rem' }}>
-                      {m.initials}
+              return (
+                <>
+                  <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--space-3)', paddingLeft: '4px' }}>
+                    Community Members ({membersList.length})
+                  </h3>
+
+                  {admins.length > 0 && (
+                    <div style={{ marginBottom: 'var(--space-4)' }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-500)', textTransform: 'uppercase', marginBottom: '6px', paddingLeft: '4px' }}>
+                        👑 Admins &amp; Leads — {admins.length}
+                      </div>
+                      {admins.map((m, i) => (
+                        <div key={m.id || i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)', marginBottom: '4px' }}>
+                          <div style={{ position: 'relative' }}>
+                            {m.avatar ? (
+                              <img src={m.avatar} alt={m.name} className="avatar avatar-sm" style={{ width: '28px', height: '28px' }} />
+                            ) : (
+                              <div className="avatar-placeholder avatar-sm" style={{ width: '28px', height: '28px', fontSize: '0.75rem' }}>
+                                {m.initials}
+                              </div>
+                            )}
+                            <div style={{ position: 'absolute', bottom: -1, right: -1, width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success-500)', border: '2px solid var(--bg-secondary)' }} />
+                          </div>
+                          <div style={{ overflow: 'hidden' }}>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {m.name}
+                            </div>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {m.headline || m.role}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div style={{ position: 'absolute', bottom: -1, right: -1, width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success-500)', border: '2px solid var(--bg-tertiary)' }} />
+                  )}
+
+                  <div>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px', paddingLeft: '4px' }}>
+                      Online Members — {generalMembers.length}
+                    </div>
+                    {generalMembers.length === 0 ? (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', padding: '6px 8px' }}>
+                        No other members have joined this community yet.
+                      </div>
+                    ) : (
+                      generalMembers.map((m, i) => (
+                        <div key={m.id || i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px', borderRadius: 'var(--radius-md)', marginBottom: '2px', cursor: 'pointer' }}>
+                          <div style={{ position: 'relative' }}>
+                            {m.avatar ? (
+                              <img src={m.avatar} alt={m.name} className="avatar avatar-sm" style={{ width: '28px', height: '28px' }} />
+                            ) : (
+                              <div className="avatar-placeholder avatar-sm" style={{ width: '28px', height: '28px', fontSize: '0.75rem' }}>
+                                {m.initials}
+                              </div>
+                            )}
+                            <div style={{ position: 'absolute', bottom: -1, right: -1, width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success-500)', border: '2px solid var(--bg-tertiary)' }} />
+                          </div>
+                          <div style={{ overflow: 'hidden' }}>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {m.name}
+                            </div>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {m.headline || m.role}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
-                  <div style={{ overflow: 'hidden' }}>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {m.name}
-                    </div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {m.role}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                </>
+              );
+            })()}
           </div>
         )}
       </div>

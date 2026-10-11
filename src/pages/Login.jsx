@@ -32,7 +32,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      toast.success('Welcome back to RIT ECE!');
+      toast.success('Welcome back to RIT ECE Nexus!');
       navigate('/home');
     } catch (err) {
       toast.error(err.message || 'Login failed');
@@ -158,7 +158,7 @@ export default function Login() {
           </div>
 
           <div className="auth-info">
-            <p>Exclusive professional network for the RIT ECE community (@{APPROVED_EMAIL_DOMAIN}).</p>
+            <p>Exclusive professional network for the RIT ECE Nexus community (@{APPROVED_EMAIL_DOMAIN}).</p>
           </div>
 
           {/* Forgot Password Modal */}

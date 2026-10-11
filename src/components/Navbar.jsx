@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Home, Users, Briefcase, Rocket, MessageCircle, Bell, Search, Settings, LogOut, Moon, Sun, Monitor, Shield, Calendar, User, ChevronDown, Edit3 } from 'lucide-react';
+import { Home, Users, Briefcase, Rocket, MessageCircle, Bell, Search, Settings, LogOut, Moon, Sun, Monitor, Shield, Calendar, User, ChevronDown, Edit3, Cpu, X } from 'lucide-react';
 import { notificationsAPI, messagesAPI } from '../services/api';
 import RITLogo from './RITLogo';
 import './Navbar.css';
@@ -16,7 +16,12 @@ export default function Navbar() {
   const [showProfile, setShowProfile] = useState(false);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const profileRef = useRef(null);
+
+  useEffect(() => {
+    setIsMobileSearchOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -48,15 +53,16 @@ export default function Navbar() {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setIsMobileSearchOpen(false);
     }
   };
 
   const navItems = [
     { path: '/home', icon: Home, label: 'Home' },
-    { path: '/network', icon: Users, label: 'My Network' },
-    { path: '/jobs', icon: Briefcase, label: 'Jobs' },
+    { path: '/network', icon: Users, label: 'Mentors & Network' },
+    { path: '/projects', icon: Cpu, label: 'Project Bank' },
+    { path: '/jobs', icon: Briefcase, label: 'Opportunities' },
     { path: '/hackathons', icon: Rocket, label: 'Hackathons' },
-    { path: '/events', icon: Calendar, label: 'Events' },
     { path: '/communities', icon: Users, label: 'Communities' },
   ];
 
@@ -73,7 +79,7 @@ export default function Navbar() {
             <RITLogo height={36} />
           </Link>
           
-          <form className="navbar-search" onSubmit={handleSearch}>
+          <form className="navbar-search desktop-search" onSubmit={handleSearch}>
             <Search size={18} className="search-icon" />
             <input
               type="text"
@@ -100,7 +106,18 @@ export default function Navbar() {
         </div>
 
         <div className="navbar-right">
-          <Link to="/messages" className={`nav-icon-btn ${location.pathname.startsWith('/messages') ? 'active' : ''}`}>
+          {/* Mobile Search Toggle Button */}
+          <button
+            type="button"
+            className="nav-icon-btn mobile-search-toggle-btn"
+            onClick={() => setIsMobileSearchOpen(prev => !prev)}
+            title="Search"
+            aria-label="Search"
+          >
+            {isMobileSearchOpen ? <X size={20} /> : <Search size={20} />}
+          </button>
+
+          <Link to="/messages" className={`nav-icon-btn navbar-msg-btn ${location.pathname.startsWith('/messages') ? 'active' : ''}`}>
             <MessageCircle size={20} />
             {unreadMessages > 0 && <span className="nav-badge">{unreadMessages}</span>}
           </Link>
@@ -153,6 +170,28 @@ export default function Navbar() {
                 <Link to="/settings" className="dropdown-item" onClick={() => setShowProfile(false)}>
                   <Settings size={16} /> Settings
                 </Link>
+
+                <div className="mobile-dropdown-nav">
+                  <div className="dropdown-divider" />
+                  <div style={{ padding: '4px 16px', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Quick Access
+                  </div>
+                  <Link to="/communities" className="dropdown-item" onClick={() => setShowProfile(false)}>
+                    <Users size={16} /> Communities & Circles
+                  </Link>
+                  <Link to="/projects" className="dropdown-item" onClick={() => setShowProfile(false)}>
+                    <Cpu size={16} /> Project Bank
+                  </Link>
+                  <Link to="/jobs" className="dropdown-item" onClick={() => setShowProfile(false)}>
+                    <Briefcase size={16} /> Opportunities
+                  </Link>
+                  <Link to="/hackathons" className="dropdown-item" onClick={() => setShowProfile(false)}>
+                    <Rocket size={16} /> Hackathons & Incubation
+                  </Link>
+                  <Link to="/events" className="dropdown-item" onClick={() => setShowProfile(false)}>
+                    <Calendar size={16} /> Department Events
+                  </Link>
+                </div>
                 
                 <div className="dropdown-divider" />
                 
@@ -181,6 +220,31 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Search Overlay */}
+      {isMobileSearchOpen && (
+        <div className="mobile-search-overlay">
+          <form className="mobile-search-form" onSubmit={handleSearch}>
+            <Search size={18} className="mobile-search-icon" />
+            <input
+              type="text"
+              autoFocus
+              placeholder="Search people, jobs, hackathons..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="mobile-search-input"
+            />
+            <button
+              type="button"
+              className="mobile-search-close-btn"
+              onClick={() => setIsMobileSearchOpen(false)}
+              aria-label="Close search"
+            >
+              <X size={18} />
+            </button>
+          </form>
+        </div>
+      )}
     </nav>
   );
 }

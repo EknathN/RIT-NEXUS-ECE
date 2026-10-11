@@ -120,7 +120,7 @@ export async function signInWithCollegeEmail({ email, password }) {
   if (data.user && !data.user.email_confirmed_at && !data.user.confirmed_at) {
     // Sign out unconfirmed session immediately
     await supabase.auth.signOut();
-    throw new Error('Please confirm your college email before accessing RIT ECE. Check your inbox for the Supabase confirmation link.');
+    throw new Error('Please confirm your college email before accessing RIT ECE Nexus. Check your inbox for the Supabase confirmation link.');
   }
 
   return data;

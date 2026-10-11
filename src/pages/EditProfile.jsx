@@ -32,25 +32,72 @@ export default function EditProfile() {
   });
 
   useEffect(() => {
+    const fetchLatestProfile = async () => {
+      const targetId = user?.id || user?._id;
+      let userData = user;
+      if (targetId) {
+        try {
+          const fetched = await usersAPI.getUser(targetId);
+          if (fetched) userData = fetched.user || fetched;
+        } catch (e) {
+          console.error('Error fetching latest user profile:', e);
+        }
+      }
+      if (userData) {
+        setProfilePhoto(userData.profile_photo || userData.avatar || '');
+        const rawExp = userData.experiences || userData.experience || [];
+        const rawProj = userData.projects || [];
+        const rawEdu = userData.education || [];
+        const rawCerts = userData.certifications || [];
+
+        setFormData({
+          headline: userData.headline || '',
+          bio: userData.bio || '',
+          phone: userData.phone || '',
+          location: userData.location || '',
+          skills: Array.isArray(userData.skills)
+            ? userData.skills.map(s => typeof s === 'object' ? s.name : s).join(', ')
+            : (userData.skills || ''),
+          linkedin: userData.linkedin || userData.socialLinks?.linkedin || '',
+          github: userData.github || userData.socialLinks?.github || '',
+          portfolio: userData.portfolio || userData.socialLinks?.portfolio || '',
+          isAvailableForMentoring: userData.isAvailableForMentoring || false,
+          mentoringTopics: Array.isArray(userData.mentoringTopics) ? userData.mentoringTopics.join(', ') : '',
+          interests: Array.isArray(userData.interests) ? userData.interests.join(', ') : '',
+          experiences: rawExp.map(e => ({
+            title: e.title || e.position || '',
+            company: e.company || '',
+            location: e.location || '',
+            startDate: e.startDate || e.start_date || '',
+            endDate: e.endDate || e.end_date || '',
+            current: !!(e.current || e.is_current),
+            description: e.description || ''
+          })),
+          education: rawEdu.map(ed => ({
+            school: ed.school || ed.institution || '',
+            degree: ed.degree || '',
+            fieldOfStudy: ed.fieldOfStudy || ed.department || '',
+            startDate: ed.startDate || ed.start_year || '',
+            endDate: ed.endDate || ed.end_year || '',
+            grade: ed.grade || ''
+          })),
+          projects: rawProj.map(p => ({
+            title: p.title || p.name || '',
+            description: p.description || '',
+            technologies: Array.isArray(p.technologies) ? p.technologies.join(', ') : (p.technologies || ''),
+            link: p.link || p.project_link || ''
+          })),
+          certifications: rawCerts.map(c => ({
+            name: c.name || c.title || '',
+            issuer: c.issuer || c.organization || '',
+            issueDate: c.issueDate || c.issue_date || '',
+            credentialUrl: c.credentialUrl || c.credential_url || ''
+          }))
+        });
+      }
+    };
     if (user) {
-      setProfilePhoto(user.profile_photo || user.avatar || '');
-      setFormData({
-        headline: user.headline || '',
-        bio: user.bio || '',
-        phone: user.phone || '',
-        location: user.location || '',
-        skills: Array.isArray(user.skills) ? user.skills.join(', ') : '',
-        linkedin: user.socialLinks?.linkedin || '',
-        github: user.socialLinks?.github || '',
-        portfolio: user.socialLinks?.portfolio || '',
-        isAvailableForMentoring: user.isAvailableForMentoring || false,
-        mentoringTopics: Array.isArray(user.mentoringTopics) ? user.mentoringTopics.join(', ') : '',
-        interests: Array.isArray(user.interests) ? user.interests.join(', ') : '',
-        experiences: user.experiences || [],
-        education: user.education || [],
-        projects: user.projects || [],
-        certifications: user.certifications || []
-      });
+      fetchLatestProfile();
     }
   }, [user]);
 
@@ -134,7 +181,9 @@ export default function EditProfile() {
         bio: formData.bio,
         phone: formData.phone,
         location: formData.location,
-        skills: formData.skills ? formData.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
+        github: formData.github,
+        linkedin: formData.linkedin,
+        portfolio: formData.portfolio,
         socialLinks: {
           linkedin: formData.linkedin,
           github: formData.github,

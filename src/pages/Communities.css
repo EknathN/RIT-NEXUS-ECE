@@ -1,0 +1,138 @@
+/* Communities.css - Multi-Panel Discord & Mobile Optimization */
+
+.communities-page-container {
+  height: calc(100vh - var(--navbar-height, 60px));
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  overflow: hidden;
+  width: 100%;
+}
+
+.communities-grid {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Panel 1: Leftmost Discord-style community server rail */
+.comm-rail-panel {
+  width: 58px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  gap: 8px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* Panel 2: Channels sidebar */
+.comm-channels-panel {
+  width: 220px;
+  background: var(--bg-tertiary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Panel 3: Active channel stage & chat */
+.comm-chat-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+/* Panel 4: Members directory sidebar */
+.comm-members-panel {
+  width: 220px;
+  background: var(--bg-tertiary);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--space-3);
+  flex-shrink: 0;
+}
+
+.mobile-channels-toggle {
+  display: none;
+}
+
+/* Mobile Web UI Optimizations (Strictly <= 768px, PC web UI untouched) */
+@media (max-width: 768px) {
+  .communities-page-container {
+    height: calc(100vh - var(--navbar-height, 60px) - var(--mobile-nav-height, 64px)) !important;
+    max-height: calc(100dvh - var(--navbar-height, 60px) - var(--mobile-nav-height, 64px)) !important;
+    overflow: hidden !important;
+  }
+
+  /* When viewing channels drawer on mobile: show rail + channels sidebar */
+  .communities-grid.mobile-view-channels .comm-rail-panel {
+    display: flex !important;
+    width: 54px !important;
+  }
+  .communities-grid.mobile-view-channels .comm-channels-panel {
+    display: flex !important;
+    flex: 1 !important;
+    width: auto !important;
+    border-right: none !important;
+  }
+  .communities-grid.mobile-view-channels .comm-chat-panel {
+    display: none !important;
+  }
+  .communities-grid.mobile-view-channels .comm-members-panel {
+    display: none !important;
+  }
+
+  /* When viewing chat on mobile: show full-width chat */
+  .communities-grid.mobile-view-chat .comm-rail-panel {
+    display: none !important;
+  }
+  .communities-grid.mobile-view-chat .comm-channels-panel {
+    display: none !important;
+  }
+  .communities-grid.mobile-view-chat .comm-chat-panel {
+    display: flex !important;
+    flex: 1 !important;
+    width: 100% !important;
+  }
+  .communities-grid.mobile-view-chat .comm-members-panel {
+    display: none !important;
+  }
+
+  /* Mobile channel list header button */
+  .mobile-channels-toggle {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: var(--radius-md);
+    background: var(--bg-hover);
+    color: var(--accent-600);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Chat action tools responsive adjustment */
+  .channel-action-tools {
+    gap: 4px !important;
+  }
+  .channel-search-box {
+    display: none !important;
+  }
+}

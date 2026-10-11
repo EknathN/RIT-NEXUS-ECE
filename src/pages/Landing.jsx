@@ -47,7 +47,7 @@ export default function Landing() {
           <div className="hero-content">
             <div className="hero-badge">
               <Zap size={14} />
-              <span>Exclusive for RIT ECE Community</span>
+              <span>Exclusive for RIT ECE Nexus Community</span>
             </div>
             <h1 className="hero-title">
               Connect. Learn.<br />
@@ -59,7 +59,7 @@ export default function Landing() {
             </p>
             <div className="hero-actions">
               <Link to="/register" className="btn btn-primary btn-lg hero-cta">
-                Join RIT ECE <ArrowRight size={18} />
+                Join RIT ECE Nexus <ArrowRight size={18} />
               </Link>
               <Link to="/login" className="btn btn-secondary btn-lg">
                 Explore Platform
@@ -81,9 +81,9 @@ export default function Landing() {
       <section className="features">
         <div className="container">
           <div className="section-header">
-            <span className="section-badge">Why RIT ECE?</span>
+            <span className="section-badge">Why RIT ECE Nexus?</span>
             <h2>Everything you need to <span className="text-gradient">succeed professionally</span></h2>
-            <p>A dedicated ecosystem built specifically for the RIT ECE community.</p>
+            <p>A dedicated ecosystem built specifically for the RIT ECE Nexus community.</p>
           </div>
           <div className="features-grid">
             {features.map((f, i) => (
@@ -104,7 +104,7 @@ export default function Landing() {
             <div className="cta-bg-pattern" />
             <Shield size={40} className="cta-icon" />
             <h2>Ready to join your professional community?</h2>
-            <p>Start building your professional identity and connect with the entire RIT ECE network today.</p>
+            <p>Start building your professional identity and connect with the entire RIT ECE Nexus network today.</p>
             <Link to="/register" className="btn btn-primary btn-lg">
               Create Your Profile <ChevronRight size={18} />
             </Link>
@@ -120,7 +120,7 @@ export default function Landing() {
               <div style={{ marginBottom: '12px' }}>
                 <RITLogo height={36} className="theme-dark-forced" />
               </div>
-              <p>The professional digital ecosystem of RIT ECE.</p>
+              <p>The professional digital ecosystem of RIT ECE Nexus.</p>
             </div>
             <div className="footer-links">
               <div>
@@ -141,7 +141,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="footer-bottom">
-            <p>© 2024 RIT ECE. Rajalakshmi Institute of Technology, Chennai.</p>
+            <p>© 2024–2026 RIT ECE Nexus. Rajalakshmi Institute of Technology, Chennai.</p>
           </div>
         </div>
       </footer>

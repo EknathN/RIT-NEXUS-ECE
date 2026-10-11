@@ -20,6 +20,7 @@ import eventRoutes from './routes/events.js';
 import notificationRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
 import searchRoutes from './routes/search.js';
+import projectRoutes from './routes/projects.js';
 import { authenticateToken } from './middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -52,8 +53,13 @@ app.use('/api/', limiter);
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+import { autoCheckGraduationStatus } from './utils/academicTransition.js';
+
 // Initialize database
 initDatabase();
+autoCheckGraduationStatus();
+// Periodic daily check (every 24 hours)
+setInterval(autoCheckGraduationStatus, 24 * 60 * 60 * 1000);
 
 // Make io accessible to routes
 app.set('io', io);
@@ -71,6 +77,7 @@ app.use('/api/events', authenticateToken, eventRoutes);
 app.use('/api/notifications', authenticateToken, notificationRoutes);
 app.use('/api/admin', authenticateToken, adminRoutes);
 app.use('/api/search', authenticateToken, searchRoutes);
+app.use('/api/projects', authenticateToken, projectRoutes);
 
 // Socket.IO for real-time messaging
 const onlineUsers = new Map();

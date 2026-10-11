@@ -245,12 +245,30 @@ router.put('/communities/:id/approve', requireAdmin, (req, res) => {
   }
 });
 
-router.get('/communities/pending', requireAdmin, (req, res) => {
+import { performAcademicRollover } from '../utils/academicTransition.js';
+
+// Academic progression & time-lapse rollover (preview & execute)
+router.get('/academic-rollover/preview', requireAdmin, (req, res) => {
   try {
-    const communities = findAll('communities').filter(c => !c.is_approved);
-    res.json(communities);
+    const preview = performAcademicRollover({ dryRun: true });
+    res.json(preview);
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('Academic rollover preview error:', err);
+    res.status(500).json({ error: 'Failed to generate academic rollover preview' });
+  }
+});
+
+router.post('/academic-rollover', requireAdmin, (req, res) => {
+  try {
+    const isDryRun = req.query.dryRun === 'true' || req.body.dryRun === true;
+    const result = performAcademicRollover({ dryRun: isDryRun });
+    res.json({
+      message: isDryRun ? 'Academic rollover preview generated' : 'Academic rollover executed successfully',
+      result,
+    });
+  } catch (err) {
+    console.error('Academic rollover error:', err);
+    res.status(500).json({ error: 'Failed to execute academic rollover' });
   }
 });
 

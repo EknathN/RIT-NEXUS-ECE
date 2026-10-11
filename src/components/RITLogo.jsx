@@ -31,7 +31,7 @@ export default function RITLogo({ height = 38, showBadge = true, className = '' 
             display: 'inline-block'
           }}
         >
-          ECE
+          ECE NEXUS
         </span>
       )}
     </div>

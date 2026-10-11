@@ -94,7 +94,19 @@ export const connectionsAPI = {
   getMyConnections: () => request('/connections/my'),
   getConnections: () => request('/connections/my'),
   getSuggestions: () => request('/connections/suggestions'),
+  getMentors: (params = {}) => request(`/connections/mentors?${new URLSearchParams(params)}`),
+  askSenior: (data) => request('/connections/ask-senior', { method: 'POST', body: data }),
+  pledgePassItForward: () => request('/connections/pass-it-forward', { method: 'POST' }),
   follow: (id) => request(`/connections/follow/${id}`, { method: 'POST' }),
+};
+
+// Projects / ECE Project Bank
+export const projectsAPI = {
+  getAll: (params = {}) => request(`/projects?${new URLSearchParams(params)}`),
+  getProjects: (params = {}) => request(`/projects?${new URLSearchParams(params)}`),
+  create: (data) => request('/projects', { method: 'POST', body: data }),
+  star: (id) => request(`/projects/${id}/star`, { method: 'POST' }),
+  joinTeam: (id, data = {}) => request(`/projects/${id}/join`, { method: 'POST', body: data }),
 };
 
 // Messages
@@ -184,6 +196,8 @@ export const adminAPI = {
   pinPost: (id) => request(`/admin/posts/${id}/pin`, { method: 'PUT' }),
   approveCommunity: (id) => request(`/admin/communities/${id}/approve`, { method: 'PUT' }),
   getPendingCommunities: () => request('/admin/communities/pending'),
+  previewAcademicRollover: () => request('/admin/academic-rollover/preview'),
+  executeAcademicRollover: () => request('/admin/academic-rollover', { method: 'POST', body: { dryRun: false } }),
   getEvents: (params = {}) => request(`/events?${new URLSearchParams(params)}`),
   createEvent: (data) => request('/events', { method: 'POST', body: data }),
   rsvpEvent: (id) => request(`/events/${id}/register`, { method: 'POST' }),

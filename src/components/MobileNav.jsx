@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Users, Briefcase, MessageCircle, User } from 'lucide-react';
+import { Home, Users, Briefcase, MessageCircle, MessageSquare, Cpu } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './MobileNav.css';
 
@@ -10,9 +10,10 @@ export default function MobileNav() {
   const items = [
     { path: '/home', icon: Home, label: 'Home' },
     { path: '/network', icon: Users, label: 'Network' },
+    { path: '/communities', icon: MessageSquare, label: 'Circles' },
+    { path: '/projects', icon: Cpu, label: 'Projects' },
     { path: '/jobs', icon: Briefcase, label: 'Jobs' },
     { path: '/messages', icon: MessageCircle, label: 'Messages' },
-    { path: `/profile/${user?.id}`, icon: User, label: 'Profile' },
   ];
 
   return (

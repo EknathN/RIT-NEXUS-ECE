@@ -3,7 +3,8 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { messagesAPI, usersAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { Send, Search, MessageSquare, Check, CheckCheck, User, Phone, Video } from 'lucide-react';
+import { Send, Search, MessageSquare, Check, CheckCheck, User, Phone, Video, ChevronLeft } from 'lucide-react';
+import './Messages.css';
 
 function getInitials(name) { return name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?'; }
 
@@ -130,10 +131,10 @@ export default function Messages() {
   });
 
   return (
-    <div className="container" style={{ padding: 'var(--space-6) var(--space-4)', height: 'calc(100vh - var(--navbar-height) - 40px)', display: 'flex', flexDirection: 'column' }}>
-      <div className="card" style={{ flex: 1, display: 'grid', gridTemplateColumns: '320px 1fr', padding: 0, overflow: 'hidden', height: '100%' }}>
+    <div className="container messages-container">
+      <div className={`card messages-card ${activePartner ? 'has-active-chat' : ''}`}>
         {/* Sidebar: Conversations */}
-        <div style={{ borderRight: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-secondary)' }}>
+        <div className="messages-sidebar">
           <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--border-color)' }}>
             <h2 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: 'var(--space-3)', color: 'var(--text-primary)' }}>Messages</h2>
             <div style={{ position: 'relative' }}>
@@ -208,10 +209,18 @@ export default function Messages() {
 
         {/* Right Chat Area */}
         {activePartner ? (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--card-bg)' }}>
+          <div className="messages-chat-area">
             {/* Chat Header */}
-            <div style={{ padding: 'var(--space-3) var(--space-6)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-primary)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            <div style={{ padding: 'var(--space-3) var(--space-4)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-primary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <button
+                  type="button"
+                  className="messages-mobile-back"
+                  onClick={() => setActivePartner(null)}
+                  title="Back to all conversations"
+                >
+                  <ChevronLeft size={22} />
+                </button>
                 <Link to={`/profile/${activePartner._id || activePartner.id}`}>
                   {(activePartner.avatar || activePartner.profile_photo) ? (
                     <img src={activePartner.avatar || activePartner.profile_photo} alt={activePartner.fullName || activePartner.full_name} className="avatar avatar-md" />
@@ -298,7 +307,7 @@ export default function Messages() {
             </form>
           </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
+          <div className="messages-chat-area" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
             <div style={{ textAlign: 'center' }}>
               <MessageSquare size={48} style={{ margin: '0 auto 16px', opacity: 0.4 }} />
               <h3>Select a conversation to start chatting</h3>

@@ -12,12 +12,63 @@ router.get('/:id', (req, res) => {
     
     const { password: _, ...safeUser } = user;
     
-    // Get related data
-    const education = findAll('education', { user_id: user.id });
-    const experience = findAll('experience', { user_id: user.id });
-    const skills = findAll('skills', { user_id: user.id });
-    const projects = findAll('projects', { user_id: user.id });
-    const certifications = findAll('certifications', { user_id: user.id });
+    // Get related data with fallbacks
+    let rawEdu = findAll('education', { user_id: user.id });
+    if (rawEdu.length === 0 && Array.isArray(user.education)) rawEdu = user.education;
+    const education = rawEdu.map(e => ({
+      ...e,
+      institution: e.institution || e.school || '',
+      school: e.institution || e.school || '',
+      start_year: e.start_year || e.startDate || '',
+      startDate: e.start_year || e.startDate || '',
+      end_year: e.end_year || e.endDate || '',
+      endDate: e.end_year || e.endDate || '',
+    }));
+
+    let rawExp = findAll('experience', { user_id: user.id });
+    if (rawExp.length === 0 && (Array.isArray(user.experience) || Array.isArray(user.experiences))) {
+      rawExp = user.experience || user.experiences;
+    }
+    const experience = rawExp.map(e => ({
+      ...e,
+      position: e.position || e.title || '',
+      title: e.title || e.position || '',
+      start_date: e.start_date || e.startDate || '',
+      startDate: e.startDate || e.start_date || '',
+      end_date: e.end_date || e.endDate || '',
+      endDate: e.endDate || e.end_date || '',
+      is_current: !!(e.is_current ?? e.current),
+      current: !!(e.current ?? e.is_current),
+    }));
+
+    let rawSkills = findAll('skills', { user_id: user.id });
+    if (rawSkills.length === 0 && Array.isArray(user.skills)) {
+      rawSkills = user.skills.map(s => typeof s === 'string' ? { id: s, name: s, endorsement_count: 0 } : s);
+    }
+    const skills = rawSkills;
+
+    let rawProj = findAll('projects', { user_id: user.id });
+    if (rawProj.length === 0 && Array.isArray(user.projects)) rawProj = user.projects;
+    const projects = rawProj.map(p => ({
+      ...p,
+      name: p.name || p.title || '',
+      title: p.title || p.name || '',
+      project_link: p.project_link || p.link || '',
+      link: p.link || p.project_link || '',
+      technologies: Array.isArray(p.technologies) ? p.technologies.join(', ') : (p.technologies || ''),
+    }));
+
+    let rawCerts = findAll('certifications', { user_id: user.id });
+    if (rawCerts.length === 0 && Array.isArray(user.certifications)) rawCerts = user.certifications;
+    const certifications = rawCerts.map(c => ({
+      ...c,
+      name: c.name || c.title || '',
+      title: c.title || c.name || '',
+      organization: c.organization || c.issuer || '',
+      issue_date: c.issue_date || c.issueDate || '',
+      issueDate: c.issue_date || c.issueDate || '',
+    }));
+
     const achievements = findAll('achievements', { user_id: user.id });
     const languages = findAll('languages', { user_id: user.id });
     const interests = findAll('interests', { user_id: user.id });
@@ -40,6 +91,7 @@ router.get('/:id', (req, res) => {
       ...safeUser,
       education,
       experience,
+      experiences: experience,
       skills,
       projects,
       certifications,
@@ -64,7 +116,140 @@ router.put('/profile', (req, res) => {
     delete updates.role;
     delete updates.id;
     delete updates.email;
+
+    if (updates.socialLinks) {
+      if (updates.socialLinks.github !== undefined) updates.github = updates.socialLinks.github;
+      if (updates.socialLinks.linkedin !== undefined) updates.linkedin = updates.socialLinks.linkedin;
+      if (updates.socialLinks.portfolio !== undefined) updates.portfolio = updates.socialLinks.portfolio;
+    }
     
+    // Sync Experiences
+    let savedExperience = [];
+    if (Array.isArray(updates.experiences) || Array.isArray(updates.experience)) {
+      const expList = updates.experiences || updates.experience;
+      const existing = findAll('experience', { user_id: req.user.id });
+      existing.forEach(e => remove('experience', e.id));
+
+      savedExperience = expList.filter(e => e && (e.title || e.position || e.company)).map(e => {
+        const item = {
+          id: e.id || uuidv4(),
+          user_id: req.user.id,
+          position: e.position || e.title || '',
+          title: e.title || e.position || '',
+          company: e.company || '',
+          location: e.location || '',
+          start_date: e.start_date || e.startDate || '',
+          startDate: e.startDate || e.start_date || '',
+          end_date: e.end_date || e.endDate || '',
+          endDate: e.endDate || e.end_date || '',
+          is_current: !!(e.is_current ?? e.current),
+          current: !!(e.current ?? e.is_current),
+          employment_type: e.employment_type || 'Full-time',
+          description: e.description || '',
+          created_at: e.created_at || new Date().toISOString()
+        };
+        insert('experience', item);
+        return item;
+      });
+      updates.experiences = savedExperience;
+      updates.experience = savedExperience;
+    }
+
+    // Sync Projects
+    let savedProjects = [];
+    if (Array.isArray(updates.projects)) {
+      const existing = findAll('projects', { user_id: req.user.id });
+      existing.forEach(p => remove('projects', p.id));
+
+      savedProjects = updates.projects.filter(p => p && (p.name || p.title)).map(p => {
+        const techs = Array.isArray(p.technologies)
+          ? p.technologies.join(', ')
+          : (p.technologies || '');
+        const item = {
+          id: p.id || uuidv4(),
+          user_id: req.user.id,
+          name: p.name || p.title || '',
+          title: p.title || p.name || '',
+          description: p.description || '',
+          technologies: techs,
+          project_link: p.project_link || p.link || '',
+          link: p.link || p.project_link || '',
+          created_at: p.created_at || new Date().toISOString()
+        };
+        insert('projects', item);
+        return item;
+      });
+      updates.projects = savedProjects;
+    }
+
+    // Sync Education
+    let savedEducation = [];
+    if (Array.isArray(updates.education)) {
+      const existing = findAll('education', { user_id: req.user.id });
+      existing.forEach(e => remove('education', e.id));
+
+      savedEducation = updates.education.filter(e => e && (e.institution || e.degree)).map(e => {
+        const item = {
+          id: e.id || uuidv4(),
+          user_id: req.user.id,
+          institution: e.institution || e.school || '',
+          degree: e.degree || '',
+          department: e.department || e.fieldOfStudy || '',
+          start_year: e.start_year || e.startDate || '',
+          end_year: e.end_year || e.endDate || '',
+          grade: e.grade || '',
+          created_at: e.created_at || new Date().toISOString()
+        };
+        insert('education', item);
+        return item;
+      });
+      updates.education = savedEducation;
+    }
+
+    // Sync Certifications
+    let savedCertifications = [];
+    if (Array.isArray(updates.certifications)) {
+      const existing = findAll('certifications', { user_id: req.user.id });
+      existing.forEach(c => remove('certifications', c.id));
+
+      savedCertifications = updates.certifications.filter(c => c && (c.name || c.title)).map(c => {
+        const item = {
+          id: c.id || uuidv4(),
+          user_id: req.user.id,
+          name: c.name || c.title || '',
+          organization: c.organization || c.issuer || '',
+          issue_date: c.issue_date || c.issueDate || '',
+          credential_url: c.credential_url || c.credentialUrl || '',
+          created_at: c.created_at || new Date().toISOString()
+        };
+        insert('certifications', item);
+        return item;
+      });
+      updates.certifications = savedCertifications;
+    }
+
+    // Sync Skills
+    if (updates.skills) {
+      const skillNames = Array.isArray(updates.skills)
+        ? updates.skills
+        : typeof updates.skills === 'string'
+          ? updates.skills.split(',').map(s => s.trim()).filter(Boolean)
+          : [];
+      if (skillNames.length > 0) {
+        const existing = findAll('skills', { user_id: req.user.id });
+        existing.forEach(s => remove('skills', s.id));
+        skillNames.forEach(name => {
+          insert('skills', {
+            id: uuidv4(),
+            user_id: req.user.id,
+            name: typeof name === 'object' ? name.name : name,
+            endorsement_count: 0,
+            created_at: new Date().toISOString()
+          });
+        });
+      }
+    }
+
     // Recalculate profile completion
     const user = findById('users', req.user.id);
     let completion = 15;
@@ -93,7 +278,15 @@ router.put('/profile', (req, res) => {
     if (!updated) return res.status(404).json({ error: 'User not found' });
     
     const { password: _, ...safeUser } = updated;
-    res.json(safeUser);
+    res.json({
+      ...safeUser,
+      education: findAll('education', { user_id: req.user.id }),
+      experience: findAll('experience', { user_id: req.user.id }),
+      experiences: findAll('experience', { user_id: req.user.id }),
+      projects: findAll('projects', { user_id: req.user.id }),
+      certifications: findAll('certifications', { user_id: req.user.id }),
+      skills: findAll('skills', { user_id: req.user.id }),
+    });
   } catch (err) {
     console.error('Update profile error:', err);
     res.status(500).json({ error: 'Server error' });

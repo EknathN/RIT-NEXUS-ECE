@@ -1,6 +1,6 @@
 {
-  "name": "RIT ECE",
-  "short_name": "RIT ECE",
+  "name": "RIT ECE Nexus",
+  "short_name": "RIT ECE Nexus",
   "description": "Professional networking platform for the ECE community of Rajalakshmi Institute of Technology",
   "start_url": "/",
   "display": "standalone",

@@ -23,9 +23,40 @@ export default function AdminDashboard() {
     targetAudience: 'all'
   });
 
+  const [rolloverLoading, setRolloverLoading] = useState(false);
+  const [rolloverPreview, setRolloverPreview] = useState(null);
+
   useEffect(() => {
     loadAdminData();
   }, [activeTab]);
+
+  const handlePreviewRollover = async () => {
+    setRolloverLoading(true);
+    try {
+      const res = await adminAPI.previewAcademicRollover();
+      setRolloverPreview(res);
+      toast.show('Academic rollover preview generated', 'info');
+    } catch (err) {
+      toast.show('Failed to preview rollover', 'error');
+    } finally {
+      setRolloverLoading(false);
+    }
+  };
+
+  const handleExecuteRollover = async () => {
+    if (!window.confirm('Confirm Academic Year Rollover? 4th Years will graduate to Alumni, 3rd Years will move to 4th Year, and 2nd Years will move to 3rd Year.')) return;
+    setRolloverLoading(true);
+    try {
+      const res = await adminAPI.executeAcademicRollover();
+      toast.show('Academic rollover successfully executed!', 'success');
+      setRolloverPreview(res.result || res);
+      loadAdminData();
+    } catch (err) {
+      toast.show('Failed to execute rollover', 'error');
+    } finally {
+      setRolloverLoading(false);
+    }
+  };
 
   const loadAdminData = async () => {
     setLoading(true);
@@ -62,7 +93,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     try {
       await adminAPI.createAnnouncement(announceData);
-      toast.show('Announcement published to RIT ECE platform!', 'success');
+      toast.show('Announcement published to RIT ECE Nexus platform!', 'success');
       setShowAnnounceModal(false);
       setAnnounceData({ title: '', content: '', category: 'general', priority: 'normal', targetAudience: 'all' });
       loadAdminData();
@@ -87,7 +118,7 @@ export default function AdminDashboard() {
       <div className="container" style={{ padding: 'var(--space-12) var(--space-4)', textAlign: 'center' }}>
         <AlertCircle size={48} style={{ color: 'var(--danger-500)', margin: '0 auto var(--space-4)' }} />
         <h2>Access Restricted</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>You do not have administrative privileges for the RIT ECE command center.</p>
+        <p style={{ color: 'var(--text-secondary)' }}>You do not have administrative privileges for the RIT ECE Nexus command center.</p>
       </div>
     );
   }
@@ -99,7 +130,7 @@ export default function AdminDashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
           <div>
             <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Shield size={24} className="text-accent" /> RIT ECE Admin Command Center
+              <Shield size={24} className="text-accent" /> RIT ECE Nexus Admin Command Center
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
               Departmental management, verified identity rosters, broadcast notices, and moderation.
@@ -112,7 +143,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 'var(--space-3)', marginBottom: 'var(--space-6)', borderBottom: '1px solid var(--border-color)', paddingBottom: 'var(--space-2)' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-3)', marginBottom: 'var(--space-6)', borderBottom: '1px solid var(--border-color)', paddingBottom: 'var(--space-2)', overflowX: 'auto', whiteSpace: 'nowrap' }}>
         <button className={`btn ${activeTab === 'stats' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setActiveTab('stats')}>
           Overview & Stats
         </button>
@@ -167,6 +198,75 @@ export default function AdminDashboard() {
               <Award size={24} className="text-purple" style={{ marginBottom: '8px' }} />
               <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats?.totalCommunities || 0}</div>
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Active ECE Communities</div>
+            </div>
+          </div>
+
+          {/* Academic Progression & Time-Lapse Rollover Control Card */}
+          <div className="card" style={{ marginTop: 'var(--space-6)', border: '1.5px solid var(--accent-500-20)' }}>
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🎓 Academic Year Progression & Batch Rollover
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Automated department time-lapse: 4th Years graduate to Alumni, 3rd Years advance to 4th Year, and 2nd Years advance to 3rd Year.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={handlePreviewRollover}
+                  disabled={rolloverLoading}
+                >
+                  Preview Next Rollover
+                </button>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleExecuteRollover}
+                  disabled={rolloverLoading}
+                >
+                  {rolloverLoading ? 'Processing...' : 'Run Academic Rollover'}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ padding: 'var(--space-4) 0' }}>
+              <div className="grid grid-3" style={{ gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+                <div style={{ padding: '12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>4th Years $\rightarrow$ Alumni</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent-500)', marginTop: '4px' }}>
+                    {rolloverPreview?.graduatedToAlumni?.length ?? 0} Students
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Graduating Batch (Pass out to Alumni)</div>
+                </div>
+
+                <div style={{ padding: '12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>3rd Years $\rightarrow$ 4th Year</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--cyan-500)', marginTop: '4px' }}>
+                    {rolloverPreview?.promotedTo4thYear?.length ?? 0} Students
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Promoted to Final Year</div>
+                </div>
+
+                <div style={{ padding: '12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>2nd Years $\rightarrow$ 3rd Year</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#10b981', marginTop: '4px' }}>
+                    {rolloverPreview?.promotedTo3rdYear?.length ?? 0} Students
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Promoted to Pre-Final Year</div>
+                </div>
+              </div>
+
+              {rolloverPreview && (
+                <div style={{ padding: '10px 14px', background: 'var(--bg-hover)', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <strong>Last Rollover Check:</strong> {new Date(rolloverPreview.timestamp || Date.now()).toLocaleString()}
+                  {rolloverPreview.graduatedToAlumni?.length > 0 && (
+                    <div style={{ marginTop: '6px', color: 'var(--success-500)', fontWeight: 600 }}>
+                      ✓ {rolloverPreview.graduatedToAlumni.length} students transitioned to Alumni status.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -250,7 +350,7 @@ export default function AdminDashboard() {
       {showAnnounceModal && (
         <div className="modal-backdrop">
           <div className="modal-content" style={{ maxWidth: '600px' }}>
-            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 'var(--space-4)' }}>Broadcast Notice to RIT ECE</h2>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 'var(--space-4)' }}>Broadcast Notice to RIT ECE Nexus</h2>
             <form onSubmit={handleCreateAnnouncement}>
               <div className="form-group" style={{ marginBottom: 'var(--space-3)' }}>
                 <label className="form-label">Notice Title *</label>

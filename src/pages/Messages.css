@@ -1,0 +1,89 @@
+/* Messages.css - Desktop 2-Column & Seamless Mobile Chat Experience */
+
+.messages-container {
+  height: calc(100vh - var(--navbar-height) - 40px);
+  display: flex;
+  flex-direction: column;
+}
+
+.messages-card {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  padding: 0 !important;
+  overflow: hidden;
+  height: 100%;
+}
+
+.messages-sidebar {
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.messages-chat-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--card-bg);
+  overflow: hidden;
+}
+
+.messages-mobile-back {
+  display: none;
+}
+
+/* Mobile Web UI Optimizations (Strictly <= 768px, PC web UI untouched) */
+@media (max-width: 768px) {
+  .messages-container {
+    padding: 8px 10px !important;
+    height: calc(100vh - var(--navbar-height) - var(--mobile-nav-height) - 16px) !important;
+  }
+
+  .messages-card {
+    grid-template-columns: 1fr !important;
+    border-radius: 10px;
+    height: 100% !important;
+  }
+
+  /* When a chat is selected, show the chat panel full-width and hide conversations list */
+  .messages-card.has-active-chat .messages-sidebar {
+    display: none !important;
+  }
+
+  .messages-card.has-active-chat .messages-chat-area {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  /* When no chat is active, show conversations list full-width */
+  .messages-card:not(.has-active-chat) .messages-sidebar {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  .messages-card:not(.has-active-chat) .messages-chat-area {
+    display: none !important;
+  }
+
+  /* Mobile back button */
+  .messages-mobile-back {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: var(--radius-md);
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    margin-right: 6px;
+  }
+  
+  .messages-mobile-back:hover {
+    background: var(--bg-hover);
+  }
+}
