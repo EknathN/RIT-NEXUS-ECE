@@ -1,4 +1,6 @@
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api` 
+  : '/api';
 
 async function request(endpoint, options = {}) {
   const token = localStorage.getItem('ritece_token');
@@ -16,10 +18,15 @@ async function request(endpoint, options = {}) {
     config.body = JSON.stringify(options.body);
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, config);
+  let response;
+  try {
+    response = await fetch(`${API_BASE}${endpoint}`, config);
+  } catch (err) {
+    throw new Error('Unable to connect to server. Please check your network or try again.');
+  }
   
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Network error' }));
+    const error = await response.json().catch(() => ({ error: `Server error (${response.status})` }));
     throw new Error(error.error || error.message || 'Something went wrong');
   }
 

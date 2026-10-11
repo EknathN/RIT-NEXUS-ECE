@@ -80,7 +80,7 @@ export default function Communities() {
 
   // Initialize Socket.IO connection
   useEffect(() => {
-    const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin;
+    const socketUrl = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 

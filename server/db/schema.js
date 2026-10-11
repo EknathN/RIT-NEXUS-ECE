@@ -5,7 +5,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DB_PATH = path.join(__dirname, 'ritece.json');
+const DB_DIR = (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) ? '/tmp' : __dirname;
+const DB_PATH = path.join(DB_DIR, 'ritece.json');
 
 // In-memory database that persists to JSON file
 let database = {
@@ -48,6 +49,12 @@ let database = {
 // Load database from file
 function loadDb() {
   try {
+    if ((process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) && !fs.existsSync(DB_PATH)) {
+      const sourcePath = path.join(__dirname, 'ritece.json');
+      if (fs.existsSync(sourcePath)) {
+        fs.copyFileSync(sourcePath, DB_PATH);
+      }
+    }
     if (fs.existsSync(DB_PATH)) {
       const data = fs.readFileSync(DB_PATH, 'utf-8');
       const parsed = JSON.parse(data);
@@ -55,7 +62,7 @@ function loadDb() {
       database = { ...database, ...parsed };
     }
   } catch (err) {
-    console.log('Creating new database...');
+    console.log('Creating new database...', err);
   }
 }
 
