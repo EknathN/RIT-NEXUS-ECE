@@ -49,20 +49,25 @@ let database = {
 // Load database from file
 function loadDb() {
   try {
-    if ((process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) && !fs.existsSync(DB_PATH)) {
-      const sourcePath = path.join(__dirname, 'ritece.json');
-      if (fs.existsSync(sourcePath)) {
-        fs.copyFileSync(sourcePath, DB_PATH);
-      }
-    }
     if (fs.existsSync(DB_PATH)) {
       const data = fs.readFileSync(DB_PATH, 'utf-8');
       const parsed = JSON.parse(data);
-      // Merge with defaults in case new tables were added
       database = { ...database, ...parsed };
+    } else {
+      const bundledUrl = new URL('./ritece.json', import.meta.url);
+      if (fs.existsSync(bundledUrl)) {
+        const data = fs.readFileSync(bundledUrl, 'utf-8');
+        const parsed = JSON.parse(data);
+        database = { ...database, ...parsed };
+        try {
+          fs.writeFileSync(DB_PATH, JSON.stringify(database, null, 2));
+        } catch (e) {
+          // ignore read-only warnings
+        }
+      }
     }
   } catch (err) {
-    console.log('Creating new database...', err);
+    console.log('Database load error:', err.message);
   }
 }
 
