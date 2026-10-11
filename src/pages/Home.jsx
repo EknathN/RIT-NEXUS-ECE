@@ -61,6 +61,7 @@ export default function Home() {
   const [feedTab, setFeedTab] = useState('all'); // 'all' | 'saved' | 'my'
   const [mediaAttachment, setMediaAttachment] = useState(null);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [sentIds, setSentIds] = useState(new Set());
 
   // Edit / Delete post states
   const [activePostMenu, setActivePostMenu] = useState(null);
@@ -966,17 +967,40 @@ export default function Home() {
                         <Link to={`/profile/${sId}`} className="suggestion-name">{sName}</Link>
                         <p className="suggestion-headline">{s.headline || `${s.role || 'Student'} • ECE`}</p>
                       </div>
-                      <button className="btn btn-sm btn-outline" onClick={async () => {
-                        try {
-                          await connectionsAPI.sendRequest(sId);
-                          toast.show('Request sent!', 'success');
-                          setSuggestions(prev => prev.filter(item => (item.id || item._id) !== sId));
-                        } catch (e) {
-                          toast.show('Could not send request', 'error');
-                        }
-                      }}>
-                        Connect
-                      </button>
+                      {sentIds.has(sId) ? (
+                        <button
+                          className="btn btn-sm btn-ghost"
+                          onClick={async () => {
+                            try {
+                              await connectionsAPI.withdrawRequest(sId);
+                              toast.show('Invitation withdrawn', 'info');
+                              setSentIds(prev => {
+                                const next = new Set(prev);
+                                next.delete(sId);
+                                return next;
+                              });
+                            } catch (e) {
+                              toast.show('Could not withdraw request', 'error');
+                            }
+                          }}
+                          title="Click to withdraw invitation"
+                          style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}
+                        >
+                          Withdraw
+                        </button>
+                      ) : (
+                        <button className="btn btn-sm btn-outline" onClick={async () => {
+                          try {
+                            await connectionsAPI.sendRequest(sId);
+                            toast.show('Connection request sent!', 'success');
+                            setSentIds(prev => new Set(prev).add(sId));
+                          } catch (e) {
+                            toast.show('Could not send request', 'error');
+                          }
+                        }}>
+                          Connect
+                        </button>
+                      )}
                     </div>
                   );
                 })}

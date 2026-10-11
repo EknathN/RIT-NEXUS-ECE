@@ -39,6 +39,9 @@ export default function MyNetwork() {
   // 'mentors' | 'suggestions' | 'alumni' | 'pass_forward' | 'requests' | 'connections'
   const [activeTab, setActiveTab] = useState('mentors');
   const [requests, setRequests] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
+  const [invitationSubTab, setInvitationSubTab] = useState('received'); // 'received' | 'sent'
+  const [sentMap, setSentMap] = useState({}); // userId -> connectionId
   const [connections, setConnections] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [mentors, setMentors] = useState([]);
@@ -68,27 +71,31 @@ export default function MyNetwork() {
   const loadData = async () => {
     setLoading(true);
     try {
-      if (activeTab === 'requests') {
-        const res = await connectionsAPI.getRequests();
-        setRequests(extractList(res, 'requests'));
-      } else if (activeTab === 'connections') {
+      // Always load received and sent requests in parallel so counts stay synced
+      const [reqRes, sentRes] = await Promise.all([
+        connectionsAPI.getRequests().catch(() => ({ requests: [] })),
+        connectionsAPI.getSentRequests().catch(() => ({ requests: [] })),
+      ]);
+      const reqList = extractList(reqRes, 'requests');
+      const sentList = extractList(sentRes, 'requests');
+      setRequests(reqList);
+      setSentRequests(sentList);
+
+      const map = {};
+      sentList.forEach(r => {
+        if (r.receiver_id) map[r.receiver_id] = r.id;
+      });
+      setSentMap(map);
+
+      if (activeTab === 'connections') {
         const res = await connectionsAPI.getConnections();
         setConnections(extractList(res, 'connections'));
       } else if (activeTab === 'mentors') {
-        const [mentorRes, reqRes] = await Promise.all([
-          connectionsAPI.getMentors(),
-          connectionsAPI.getRequests(),
-        ]);
+        const mentorRes = await connectionsAPI.getMentors();
         setMentors(extractList(mentorRes, 'mentors'));
-        setRequests(extractList(reqRes, 'requests'));
-      } else {
-        // 'suggestions' or 'alumni'
-        const [sugRes, reqRes] = await Promise.all([
-          connectionsAPI.getSuggestions(),
-          connectionsAPI.getRequests(),
-        ]);
+      } else if (activeTab === 'suggestions' || activeTab === 'alumni') {
+        const sugRes = await connectionsAPI.getSuggestions();
         setSuggestions(extractList(sugRes, 'suggestions'));
-        setRequests(extractList(reqRes, 'requests'));
       }
     } catch (err) {
       console.error('Network load error:', err);
@@ -99,20 +106,46 @@ export default function MyNetwork() {
 
   const handleSendRequest = async (userId) => {
     try {
-      await connectionsAPI.sendRequest(userId);
+      const res = await connectionsAPI.sendRequest(userId);
+      const connId = res?.id || res?.data?.id || true;
+      setSentMap(prev => ({ ...prev, [userId]: connId }));
       toast.show('Connection request sent!', 'success');
-      setSuggestions(prev => prev.filter(u => u.id !== userId));
-      setMentors(prev => prev.map(m => m.id === userId ? { ...m, requested: true } : m));
+      
+      const sentRes = await connectionsAPI.getSentRequests().catch(() => null);
+      if (sentRes) {
+        setSentRequests(extractList(sentRes, 'requests'));
+      }
     } catch (err) {
       toast.show(err.response?.data?.message || err.message || 'Failed to send request', 'error');
+    }
+  };
+
+  const handleWithdraw = async (targetId) => {
+    try {
+      const connectionId = sentMap[targetId] || targetId;
+      await connectionsAPI.withdrawRequest(connectionId);
+      toast.show('Invitation withdrawn', 'info');
+      setSentMap(prev => {
+        const next = { ...prev };
+        delete next[targetId];
+        Object.keys(next).forEach(k => {
+          if (next[k] === targetId) delete next[k];
+        });
+        return next;
+      });
+      setSentRequests(prev => prev.filter(r => (r.id !== targetId && r._id !== targetId && r.receiver_id !== targetId)));
+    } catch (err) {
+      toast.show(err.message || 'Failed to withdraw invitation', 'error');
     }
   };
 
   const handleAccept = async (requestId) => {
     try {
       await connectionsAPI.acceptRequest(requestId);
-      toast.show('Connection accepted!', 'success');
+      toast.show('Connection accepted! Added to your network.', 'success');
       setRequests(prev => prev.filter(r => (r._id !== requestId && r.id !== requestId)));
+      const connRes = await connectionsAPI.getConnections().catch(() => null);
+      if (connRes) setConnections(extractList(connRes, 'connections'));
     } catch (err) {
       toast.show('Failed to accept request', 'error');
     }
@@ -554,13 +587,29 @@ export default function MyNetwork() {
                       <Link to={`/profile/${sugUser.id}`} className="btn btn-sm btn-ghost" style={{ flex: 1 }}>
                         Profile
                       </Link>
-                      <button
-                        className="btn btn-sm btn-primary"
-                        onClick={() => handleSendRequest(sugUser.id)}
-                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-                      >
-                        <UserPlus size={15} /> Connect
-                      </button>
+                      {sentMap[sugUser.id] ? (
+                        <div style={{ flex: 1, display: 'flex', gap: '4px' }}>
+                          <button className="btn btn-sm btn-ghost" disabled style={{ flex: 1, padding: '4px 6px', fontSize: '0.78rem', opacity: 0.9 }}>
+                            <Clock size={13} /> Pending
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline"
+                            onClick={() => handleWithdraw(sugUser.id)}
+                            title="Withdraw Invitation"
+                            style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                          >
+                            Withdraw
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => handleSendRequest(sugUser.id)}
+                          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                        >
+                          <UserPlus size={15} /> Connect
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -632,52 +681,141 @@ export default function MyNetwork() {
           </div>
         </div>
       ) : activeTab === 'requests' ? (
-        /* TAB 5: INVITATIONS */
+        /* TAB 5: INVITATIONS (LINKEDIN STYLE RECEIVED & SENT) */
         <div>
-          {requests.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-12)' }}>
-              <Users size={48} style={{ color: 'var(--text-muted)', margin: '0 auto var(--space-4)' }} />
-              <h3>No Pending Invitations</h3>
-              <p style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-2)' }}>You don&apos;t have any pending connection requests at the moment.</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-5)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+            <div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Manage Invitations
+              </h2>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                {invitationSubTab === 'received'
+                  ? `You have ${requests.length} incoming invitation${requests.length === 1 ? '' : 's'}`
+                  : `You have ${sentRequests.length} pending sent invitation${sentRequests.length === 1 ? '' : 's'}`}
+              </p>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-              {requests.map(req => {
-                const sender = req.sender;
-                if (!sender) return null;
-                const reqId = req.id || req._id;
-                const senderId = sender.id || sender._id;
-                const senderName = sender.full_name || sender.fullName;
+            <div style={{ display: 'flex', gap: '6px', background: 'var(--bg-secondary)', padding: '4px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              <button
+                className={`btn btn-sm ${invitationSubTab === 'received' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setInvitationSubTab('received')}
+                style={{ borderRadius: 'var(--radius-sm)', fontWeight: 600 }}
+              >
+                Received ({requests.length})
+              </button>
+              <button
+                className={`btn btn-sm ${invitationSubTab === 'sent' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setInvitationSubTab('sent')}
+                style={{ borderRadius: 'var(--radius-sm)', fontWeight: 600 }}
+              >
+                Sent ({sentRequests.length})
+              </button>
+            </div>
+          </div>
 
-                return (
-                  <div key={reqId} className="card" style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
-                    <Link to={`/profile/${senderId}`}>
-                      {sender.profile_photo || sender.avatar ? (
-                        <img src={sender.profile_photo || sender.avatar} alt={senderName} className="avatar avatar-lg" />
-                      ) : (
-                        <div className="avatar-placeholder avatar-lg">{getInitials(senderName)}</div>
-                      )}
-                    </Link>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <Link to={`/profile/${senderId}`} style={{ fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none' }}>
-                        {senderName}
+          {invitationSubTab === 'received' ? (
+            requests.length === 0 ? (
+              <div className="card" style={{ textAlign: 'center', padding: 'var(--space-12)' }}>
+                <Users size={48} style={{ color: 'var(--text-muted)', margin: '0 auto var(--space-4)' }} />
+                <h3>No Pending Invitations Received</h3>
+                <p style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-2)' }}>
+                  You don&apos;t have any pending connection requests waiting for your response.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                {requests.map(req => {
+                  const sender = req.sender;
+                  if (!sender) return null;
+                  const reqId = req.id || req._id;
+                  const senderId = sender.id || sender._id;
+                  const senderName = sender.full_name || sender.fullName;
+
+                  return (
+                    <div key={reqId} className="card" style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center', padding: 'var(--space-4)' }}>
+                      <Link to={`/profile/${senderId}`}>
+                        {sender.profile_photo || sender.avatar ? (
+                          <img src={sender.profile_photo || sender.avatar} alt={senderName} className="avatar avatar-lg" />
+                        ) : (
+                          <div className="avatar-placeholder avatar-lg">{getInitials(senderName)}</div>
+                        )}
                       </Link>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                        {sender.headline || `${sender.account_type || 'student'} • RIT ECE`}
-                      </p>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Link to={`/profile/${senderId}`} style={{ fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none', fontSize: '1rem' }}>
+                          {senderName}
+                        </Link>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                          {sender.headline || `${sender.account_type || 'student'} • Department of ECE`}
+                        </p>
+                        {req.created_at && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Sent {new Date(req.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                        <button className="btn btn-sm btn-primary" onClick={() => handleAccept(reqId)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <Check size={16} /> Accept
+                        </button>
+                        <button className="btn btn-sm btn-outline" onClick={() => handleReject(reqId)} title="Decline request" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <X size={16} /> Ignore
+                        </button>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                      <button className="btn btn-sm btn-primary" onClick={() => handleAccept(reqId)}>
-                        <Check size={16} /> Accept
-                      </button>
-                      <button className="btn btn-sm btn-outline" onClick={() => handleReject(reqId)}>
-                        <X size={16} />
-                      </button>
+                  );
+                })}
+              </div>
+            )
+          ) : (
+            sentRequests.length === 0 ? (
+              <div className="card" style={{ textAlign: 'center', padding: 'var(--space-12)' }}>
+                <Clock size={48} style={{ color: 'var(--text-muted)', margin: '0 auto var(--space-4)' }} />
+                <h3>No Pending Sent Invitations</h3>
+                <p style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-2)' }}>
+                  You haven&apos;t sent any connection requests that are pending acceptance.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                {sentRequests.map(req => {
+                  const receiver = req.receiver;
+                  const reqId = req.id || req._id;
+                  const receiverId = receiver?.id || receiver?._id || req.receiver_id;
+                  const receiverName = receiver?.full_name || receiver?.fullName || 'ECE Member';
+
+                  return (
+                    <div key={reqId} className="card" style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center', padding: 'var(--space-4)' }}>
+                      <Link to={`/profile/${receiverId}`}>
+                        {receiver?.profile_photo || receiver?.avatar ? (
+                          <img src={receiver.profile_photo || receiver.avatar} alt={receiverName} className="avatar avatar-lg" />
+                        ) : (
+                          <div className="avatar-placeholder avatar-lg">{getInitials(receiverName)}</div>
+                        )}
+                      </Link>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Link to={`/profile/${receiverId}`} style={{ fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none', fontSize: '1rem' }}>
+                          {receiverName}
+                        </Link>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                          {receiver?.headline || `${receiver?.account_type || 'student'} • Department of ECE`}
+                        </p>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          Invited {req.created_at ? new Date(req.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'recently'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                        <button
+                          className="btn btn-sm btn-outline"
+                          onClick={() => handleWithdraw(reqId || receiverId)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          <X size={15} /> Withdraw
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )
           )}
         </div>
       ) : (

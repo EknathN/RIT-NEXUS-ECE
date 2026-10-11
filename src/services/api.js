@@ -93,11 +93,18 @@ export const connectionsAPI = {
       : receiver;
     return request('/connections/request', { method: 'POST', body: { receiver_id } });
   },
+  withdrawRequest: (idOrTarget) => {
+    const target = typeof idOrTarget === 'object' && idOrTarget !== null
+      ? (idOrTarget.id || idOrTarget.connection_id || idOrTarget.receiver_id)
+      : idOrTarget;
+    return request(`/connections/${target}/withdraw`, { method: 'POST' });
+  },
   acceptRequest: (id) => request(`/connections/${id}/accept`, { method: 'PUT' }),
   rejectRequest: (id) => request(`/connections/${id}/reject`, { method: 'PUT' }),
   removeConnection: (id) => request(`/connections/${id}`, { method: 'DELETE' }),
   getPending: () => request('/connections/pending'),
   getRequests: () => request('/connections/pending'),
+  getSentRequests: () => request('/connections/sent'),
   getMyConnections: () => request('/connections/my'),
   getConnections: () => request('/connections/my'),
   getSuggestions: () => request('/connections/suggestions'),

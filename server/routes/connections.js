@@ -66,14 +66,17 @@ router.post('/request', (req, res) => {
   }
 });
 
-// Accept connection request
-router.put('/:id/accept', (req, res) => {
+// Accept connection request (by connection ID or sender's user ID)
+const handleAccept = (req, res) => {
   try {
-    const connection = findById('connections', req.params.id);
-    if (!connection) return res.status(404).json({ error: 'Connection not found' });
-    if (connection.receiver_id !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
+    let connection = findById('connections', req.params.id);
+    if (!connection) {
+      connection = findOne('connections', { sender_id: req.params.id, receiver_id: req.user.id, status: 'pending' });
+    }
+    if (!connection) return res.status(404).json({ error: 'Connection request not found' });
+    if (connection.receiver_id !== req.user.id) return res.status(403).json({ error: 'Not authorized to accept this request' });
     
-    update('connections', req.params.id, { status: 'accepted' });
+    update('connections', connection.id, { status: 'accepted', updated_at: new Date().toISOString() });
     
     // Create notification for sender
     const accepter = findById('users', req.user.id);
@@ -97,30 +100,126 @@ router.put('/:id/accept', (req, res) => {
       insert('followers', { id: uuidv4(), follower_id: connection.sender_id, following_id: req.user.id, created_at: new Date().toISOString() });
     }
     
-    res.json({ message: 'Connection accepted' });
+    res.json({ message: 'Connection accepted', connection: { ...connection, status: 'accepted' }, success: true });
   } catch (err) {
+    console.error('Accept error:', err);
     res.status(500).json({ error: 'Server error' });
   }
-});
+};
+router.put('/:id/accept', handleAccept);
+router.post('/:id/accept', handleAccept);
 
-// Reject connection request
-router.put('/:id/reject', (req, res) => {
+// Reject / Ignore connection request (by connection ID or sender's user ID)
+const handleReject = (req, res) => {
   try {
-    const connection = findById('connections', req.params.id);
+    let connection = findById('connections', req.params.id);
+    if (!connection) {
+      connection = findOne('connections', { sender_id: req.params.id, receiver_id: req.user.id, status: 'pending' });
+    }
     if (!connection) return res.status(404).json({ error: 'Connection not found' });
+    if (connection.receiver_id !== req.user.id && connection.sender_id !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
     
-    remove('connections', req.params.id);
-    res.json({ message: 'Connection rejected' });
+    remove('connections', connection.id);
+
+    // Remove notification sent to receiver
+    const notifs = findWhere('notifications', n => 
+      n.from_user_id === connection.sender_id && 
+      n.user_id === connection.receiver_id && 
+      n.type === 'connection_request'
+    );
+    notifs.forEach(n => remove('notifications', n.id));
+
+    res.json({ message: 'Connection rejected', success: true });
   } catch (err) {
+    console.error('Reject error:', err);
     res.status(500).json({ error: 'Server error' });
   }
-});
+};
+router.put('/:id/reject', handleReject);
+router.post('/:id/reject', handleReject);
 
-// Remove connection
+// Withdraw sent invitation (by connection ID or receiver's user ID)
+const handleWithdraw = (req, res) => {
+  try {
+    const targetId = req.params.id || req.body?.receiver_id || req.body?.connection_id || req.body?.id;
+    if (!targetId) return res.status(400).json({ error: 'Target ID required' });
+
+    let connection = findById('connections', targetId);
+    if (!connection) {
+      connection = findOne('connections', { sender_id: req.user.id, receiver_id: targetId, status: 'pending' });
+    }
+
+    if (!connection) {
+      return res.status(404).json({ error: 'Pending invitation not found' });
+    }
+
+    if (connection.sender_id !== req.user.id) {
+      return res.status(403).json({ error: 'Only the sender can withdraw this invitation' });
+    }
+
+    remove('connections', connection.id);
+
+    // Remove notification sent to the receiver
+    const notifs = findWhere('notifications', n => 
+      n.from_user_id === req.user.id && 
+      n.user_id === connection.receiver_id && 
+      n.type === 'connection_request'
+    );
+    notifs.forEach(n => remove('notifications', n.id));
+
+    res.json({ message: 'Invitation withdrawn successfully', success: true });
+  } catch (err) {
+    console.error('Withdraw error:', err);
+    res.status(500).json({ error: 'Server error withdrawing invitation' });
+  }
+};
+router.delete('/:id/withdraw', handleWithdraw);
+router.post('/:id/withdraw', handleWithdraw);
+router.post('/withdraw', handleWithdraw);
+
+// Remove existing connection
 router.delete('/:id', (req, res) => {
   try {
-    remove('connections', req.params.id);
-    res.json({ message: 'Connection removed' });
+    let connection = findById('connections', req.params.id);
+    if (!connection) {
+      connection = findOne('connections', { sender_id: req.user.id, receiver_id: req.params.id }) ||
+                   findOne('connections', { sender_id: req.params.id, receiver_id: req.user.id });
+    }
+    if (connection) {
+      remove('connections', connection.id);
+    }
+    res.json({ message: 'Connection removed', success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get sent invitations (invitations sent by current user that are still pending)
+router.get('/sent', (req, res) => {
+  try {
+    const sent = findAll('connections', { sender_id: req.user.id, status: 'pending' })
+      .map(conn => {
+        const receiver = findById('users', conn.receiver_id);
+        return {
+          ...conn,
+          receiver: receiver ? {
+            id: receiver.id,
+            full_name: receiver.full_name,
+            profile_photo: receiver.profile_photo || receiver.avatar || '',
+            avatar: receiver.profile_photo || receiver.avatar || '',
+            headline: receiver.headline,
+            verification_status: receiver.verification_status,
+            account_type: receiver.account_type,
+            role: receiver.account_type || receiver.role,
+            batch: receiver.batch,
+            batchYear: receiver.batch,
+            current_company: receiver.current_company,
+          } : null,
+        };
+      });
+    res.json({ requests: sent, sent, data: sent, success: true });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }

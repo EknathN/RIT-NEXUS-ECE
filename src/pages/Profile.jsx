@@ -8,7 +8,7 @@ import {
   Linkedin, Globe, CheckCircle, UserPlus, MessageCircle, UserCheck,
   Clock, Award, BookOpen, FolderOpen, Star, Languages as LangIcon,
   Heart, Camera, ThumbsUp, MessageSquare, Share2, FileText, Image as ImageIcon,
-  Sparkles, Plus, Video, X, Send
+  Sparkles, Plus, Video, X, Send, Check
 } from 'lucide-react';
 import './Profile.css';
 
@@ -184,10 +184,62 @@ export default function Profile() {
 
   const handleConnect = async () => {
     try {
-      await connectionsAPI.sendRequest(id);
-      setProfile(prev => ({ ...prev, connectionStatus: 'pending' }));
+      const res = await connectionsAPI.sendRequest(id);
+      const connId = res?.id || res?.data?.id;
+      setProfile(prev => ({
+        ...prev,
+        connectionStatus: 'pending_sent',
+        connectionId: connId || prev.connectionId,
+        canWithdraw: true,
+        canAccept: false,
+        isConnectionSender: true,
+      }));
       toast.success('Connection request sent!');
     } catch (err) { toast.error(err.message || 'Failed to send request'); }
+  };
+
+  const handleWithdraw = async () => {
+    try {
+      await connectionsAPI.withdrawRequest(profile.connectionId || id);
+      setProfile(prev => ({
+        ...prev,
+        connectionStatus: 'none',
+        connectionId: null,
+        canWithdraw: false,
+        canAccept: false,
+        isConnectionSender: false,
+      }));
+      toast.success('Connection invitation withdrawn');
+    } catch (err) { toast.error(err.message || 'Failed to withdraw invitation'); }
+  };
+
+  const handleAccept = async () => {
+    try {
+      await connectionsAPI.acceptRequest(profile.connectionId || id);
+      setProfile(prev => ({
+        ...prev,
+        connectionStatus: 'accepted',
+        canWithdraw: false,
+        canAccept: false,
+        connectionCount: (prev.connectionCount || prev.connections_count || 0) + 1,
+      }));
+      toast.success('Connection accepted! You are now connected.');
+    } catch (err) { toast.error(err.message || 'Failed to accept connection'); }
+  };
+
+  const handleReject = async () => {
+    try {
+      await connectionsAPI.rejectRequest(profile.connectionId || id);
+      setProfile(prev => ({
+        ...prev,
+        connectionStatus: 'none',
+        connectionId: null,
+        canWithdraw: false,
+        canAccept: false,
+        isConnectionSender: false,
+      }));
+      toast.info('Connection request ignored');
+    } catch (err) { toast.error(err.message || 'Failed to ignore connection'); }
   };
 
   const handleMessage = async () => {
@@ -276,13 +328,40 @@ export default function Profile() {
               ) : (
                 <>
                   {(profile.connectionStatus === 'accepted' || profile.connection_status === 'accepted') ? (
-                    <button className="btn btn-secondary"><UserCheck size={16} /> Connected</button>
-                  ) : (profile.connectionStatus === 'pending' || profile.connection_status === 'pending') ? (
-                    <button className="btn btn-ghost" disabled><Clock size={16} /> Pending</button>
+                    <button className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <UserCheck size={16} /> Connected
+                    </button>
+                  ) : (profile.canAccept || profile.connectionStatus === 'pending_received') ? (
+                    <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
+                      <button className="btn btn-primary" onClick={handleAccept} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <Check size={16} /> Accept
+                      </button>
+                      <button className="btn btn-outline" onClick={handleReject} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <X size={16} /> Ignore
+                      </button>
+                    </div>
+                  ) : (profile.canWithdraw || profile.connectionStatus === 'pending_sent' || (profile.connectionStatus === 'pending' && profile.isConnectionSender !== false)) ? (
+                    <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
+                      <button className="btn btn-ghost" disabled style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', opacity: 0.9 }}>
+                        <Clock size={16} /> Pending
+                      </button>
+                      <button
+                        className="btn btn-outline"
+                        onClick={handleWithdraw}
+                        title="Withdraw connection invitation"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <X size={15} /> Withdraw
+                      </button>
+                    </div>
                   ) : (
-                    <button className="btn btn-primary" onClick={handleConnect}><UserPlus size={16} /> Connect</button>
+                    <button className="btn btn-primary" onClick={handleConnect} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <UserPlus size={16} /> Connect
+                    </button>
                   )}
-                  <button className="btn btn-secondary" onClick={handleMessage}><MessageCircle size={16} /> Message</button>
+                  <button className="btn btn-secondary" onClick={handleMessage} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <MessageCircle size={16} /> Message
+                  </button>
                 </>
               )}
             </div>

@@ -80,9 +80,31 @@ router.get('/:id', (req, res) => {
 
     // Check connection status with current user
     let connectionStatus = 'none';
+    let connectionId = null;
+    let isConnectionSender = false;
+    let canWithdraw = false;
+    let canAccept = false;
+
     const conn = findOne('connections', { sender_id: req.user.id, receiver_id: user.id }) ||
                  findOne('connections', { sender_id: user.id, receiver_id: req.user.id });
-    if (conn) connectionStatus = conn.status;
+    if (conn) {
+      connectionId = conn.id;
+      if (conn.status === 'accepted') {
+        connectionStatus = 'accepted';
+      } else if (conn.status === 'pending') {
+        if (conn.sender_id === req.user.id) {
+          connectionStatus = 'pending_sent';
+          isConnectionSender = true;
+          canWithdraw = true;
+        } else {
+          connectionStatus = 'pending_received';
+          isConnectionSender = false;
+          canAccept = true;
+        }
+      } else {
+        connectionStatus = conn.status;
+      }
+    }
     
     // Check follow status
     const isFollowing = !!findOne('followers', { follower_id: req.user.id, following_id: user.id });
@@ -100,6 +122,11 @@ router.get('/:id', (req, res) => {
       interests,
       connectionCount: connections,
       connectionStatus,
+      connectionId,
+      isConnectionSender,
+      canWithdraw,
+      canAccept,
+      rawConnectionStatus: conn ? conn.status : 'none',
       isFollowing,
     });
   } catch (err) {
