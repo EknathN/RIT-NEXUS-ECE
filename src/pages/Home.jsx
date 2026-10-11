@@ -49,9 +49,23 @@ const reactionTypes = [
 export default function Home() {
   const { user } = useAuth();
   const toast = useToast();
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState(() => {
+    try {
+      const cached = localStorage.getItem('ritece_cached_feed');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [newPost, setNewPost] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem('ritece_cached_feed');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
   const [posting, setPosting] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
@@ -81,7 +95,14 @@ export default function Home() {
   const loadFeed = async () => {
     try {
       const data = await postsAPI.getFeed();
-      setPosts(Array.isArray(data?.posts) ? data.posts : (Array.isArray(data) ? data : []));
+      const list = Array.isArray(data?.posts) ? data.posts : (Array.isArray(data) ? data : []);
+      if (list && list.length > 0) {
+        setPosts(list);
+        try { localStorage.setItem('ritece_cached_feed', JSON.stringify(list)); } catch (_) {}
+      } else {
+        // If server returned empty, but we have cached posts, preserve cache
+        setPosts(prev => prev.length > 0 ? prev : []);
+      }
     } catch (err) {
       console.error('Feed load error:', err);
     } finally {
@@ -140,7 +161,11 @@ export default function Home() {
         post_type: mediaAttachment?.type || 'text',
         document_name: mediaAttachment?.name || '',
       });
-      setPosts(prev => [post, ...prev]);
+      setPosts(prev => {
+        const next = [post, ...prev.filter(p => (p.id || p._id) !== (post.id || post._id))];
+        try { localStorage.setItem('ritece_cached_feed', JSON.stringify(next)); } catch (_) {}
+        return next;
+      });
       setNewPost('');
       setMediaAttachment(null);
       toast.show('Post published to RIT ECE Nexus network!', 'success');
@@ -357,7 +382,15 @@ export default function Home() {
   const userDisplayName = user?.full_name || user?.fullName || 'ECE Member';
   const userHeadline = user?.headline || 'ECE Department • RIT Chennai';
 
-  const displayedPosts = posts;
+  const displayedPosts = posts.filter(post => {
+    if (!post) return false;
+    if (feedTab === 'saved') return !!post.isSaved;
+    if (feedTab === 'my') {
+      const myId = user?.id || user?._id;
+      return (post.user_id && post.user_id === myId) || (post.author?.id && post.author?.id === myId);
+    }
+    return true;
+  });
 
   return (
     <div className="container">

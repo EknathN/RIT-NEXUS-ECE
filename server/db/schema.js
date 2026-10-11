@@ -35,26 +35,18 @@ function loadDb() {
   }
 }
 
-// Save database to file (debounced)
-let saveTimeout = null;
+// Save database to file (synchronous to guarantee persistence across serverless executions)
 function saveDb() {
-  if (saveTimeout) clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => {
-    try {
-      fs.writeFileSync(DB_PATH, JSON.stringify(database, null, 2));
-    } catch (err) {
-      console.error('Error saving database:', err);
-    }
-  }, 100);
-}
-
-// Force save (synchronous)
-function saveDbSync() {
   try {
     fs.writeFileSync(DB_PATH, JSON.stringify(database, null, 2));
   } catch (err) {
     console.error('Error saving database:', err);
   }
+}
+
+// Force save alias
+function saveDbSync() {
+  saveDb();
 }
 
 // Database operations

@@ -399,16 +399,21 @@ router.get('/:id/channels/:channelId/messages', (req, res) => {
 
     const enriched = msgs.map(m => {
       const author = findById('users', m.user_id);
+      const authorName = author?.full_name || author?.fullName || author?.name || 'Community Member';
       return {
         ...m,
         _id: m.id,
-        author: author ? {
-          id: author.id,
-          full_name: author.full_name,
-          profile_photo: author.profile_photo,
-          role: author.role || author.account_type || 'student',
-          headline: author.headline || ''
-        } : { full_name: 'Community Member' }
+        user_id: m.user_id,
+        author: {
+          id: m.user_id,
+          _id: m.user_id,
+          full_name: authorName,
+          fullName: authorName,
+          profile_photo: author?.profile_photo || author?.avatar || '',
+          avatar: author?.profile_photo || author?.avatar || '',
+          role: author?.role || author?.account_type || 'student',
+          headline: author?.headline || ''
+        }
       };
     });
 
@@ -447,16 +452,21 @@ router.post('/:id/channels/:channelId/messages', (req, res) => {
     insert('community_messages', newMessage);
 
     const author = findById('users', req.user.id);
+    const authorName = author?.full_name || author?.fullName || author?.name || req.user.full_name || 'Community Member';
     const enriched = {
       ...newMessage,
       _id: newMessage.id,
-      author: author ? {
-        id: author.id,
-        full_name: author.full_name,
-        profile_photo: author.profile_photo,
-        role: author.role || author.account_type || 'student',
-        headline: author.headline || ''
-      } : { full_name: 'Community Member' }
+      user_id: req.user.id,
+      author: {
+        id: req.user.id,
+        _id: req.user.id,
+        full_name: authorName,
+        fullName: authorName,
+        profile_photo: author?.profile_photo || author?.avatar || '',
+        avatar: author?.profile_photo || author?.avatar || '',
+        role: author?.role || author?.account_type || req.user.role || 'student',
+        headline: author?.headline || ''
+      }
     };
 
     // Emit real-time WebSocket event

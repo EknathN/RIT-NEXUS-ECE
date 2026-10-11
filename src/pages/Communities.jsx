@@ -89,6 +89,13 @@ export default function Communities() {
         if (activeChannel && (data.channelId === activeChannel.id || data.channelId === activeChannel.slug)) {
           setMessages(prev => {
             if (prev.some(m => m.id === data.message.id || m._id === data.message.id)) return prev;
+            // Replace matching optimistic temp message from the current user
+            const tempIdx = prev.findIndex(m => String(m.id).startsWith('temp-') && m.user_id === data.message.user_id && m.content === data.message.content);
+            if (tempIdx !== -1) {
+              const copy = [...prev];
+              copy[tempIdx] = data.message;
+              return copy;
+            }
             return [...prev, data.message];
           });
         }
@@ -244,23 +251,30 @@ export default function Communities() {
     const text = inputMessage.trim();
     setInputMessage('');
 
-    // Optimistic message shown instantly
+    const myId = user?.id || user?._id;
+    const userName = user?.full_name || user?.fullName || user?.name || user?.email?.split('@')[0] || 'Member';
+    const userRole = user?.role || user?.account_type || 'student';
+    const userPhoto = user?.profile_photo || user?.avatar || '';
+
+    // Optimistic message shown instantly with full author details and matching user_id
     const tempId = `temp-${Date.now()}`;
     const optimisticMsg = {
       id: tempId,
       _id: tempId,
+      user_id: myId,
       content: text,
       type: activeChannel.type === 'announcement' ? 'announcement' : 'text',
-      reply_to: replyingTo ? { id: replyingTo.id, author: replyingTo.author?.full_name, content: replyingTo.content?.slice(0, 60) } : null,
+      reply_to: replyingTo ? { id: replyingTo.id, author: replyingTo.author?.full_name || replyingTo.author?.fullName || 'Member', content: replyingTo.content?.slice(0, 60) } : null,
       created_at: new Date().toISOString(),
       author: {
-        id: user?.id,
-        _id: user?.id,
-        full_name: user?.full_name || 'You',
-        fullName: user?.full_name || 'You',
-        profile_photo: user?.profile_photo || user?.avatar,
-        avatar: user?.profile_photo || user?.avatar,
-        headline: user?.headline,
+        id: myId,
+        _id: myId,
+        full_name: userName,
+        fullName: userName,
+        role: userRole,
+        profile_photo: userPhoto,
+        avatar: userPhoto,
+        headline: user?.headline || '',
         verification_status: user?.verification_status,
       }
     };
@@ -271,13 +285,15 @@ export default function Communities() {
       const res = await communitiesAPI.sendMessage(commId, chId, {
         content: text,
         type: activeChannel.type === 'announcement' ? 'announcement' : 'text',
-        reply_to: replyingTo ? { id: replyingTo.id, author: replyingTo.author?.full_name, content: replyingTo.content?.slice(0, 60) } : null
+        reply_to: replyingTo ? { id: replyingTo.id, author: replyingTo.author?.full_name || replyingTo.author?.fullName || 'Member', content: replyingTo.content?.slice(0, 60) } : null
       });
       const newMsg = res.message || res;
-      setMessages(prev => prev.map(m => m.id === tempId ? newMsg : m));
+      if (newMsg) {
+        setMessages(prev => prev.map(m => (m.id === tempId || m._id === tempId) ? { ...newMsg, user_id: newMsg.user_id || myId } : m));
+      }
     } catch (err) {
       toast.show('Failed to send message', 'error');
-      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setMessages(prev => prev.filter(m => m.id !== tempId && m._id !== tempId));
     }
   };
 
@@ -295,8 +311,8 @@ export default function Communities() {
         code_snippet: codeData.code,
         code_language: codeData.language
       });
-      const newMsg = res.message;
-      setMessages(prev => [...prev, newMsg]);
+      const newMsg = res.message || res;
+      if (newMsg) setMessages(prev => [...prev, newMsg]);
       setShowCodeModal(false);
       setCodeData({ code: '', language: 'verilog', comment: '' });
       toast.show('Code snippet posted to channel!', 'success');
@@ -321,7 +337,8 @@ export default function Communities() {
           attachment_name: file.name,
           attachment_url: reader.result || URL.createObjectURL(file)
         });
-        setMessages(prev => [...prev, res.message]);
+        const newMsg = res.message || res;
+        if (newMsg) setMessages(prev => [...prev, newMsg]);
         toast.show('Attachment sent!', 'success');
       } catch (err) {
         toast.show('Failed to upload file', 'error');
@@ -983,9 +1000,13 @@ export default function Communities() {
                   </div>
                 ) : (
                   filteredMessages.map(msg => {
-                    const isAuthor = msg.user_id === user?.id;
+                    const myId = user?.id || user?._id;
+                    const msgAuthorId = msg.user_id || msg.author?.id || msg.author?._id;
+                    const isAuthor = Boolean(myId && msgAuthorId && String(myId) === String(msgAuthorId));
+                    const canDelete = isAuthor || user?.role === 'admin';
                     const isAnnouncement = msg.type === 'announcement' || activeChannel?.type === 'announcement';
                     const hasReactions = msg.reactions && Object.keys(msg.reactions).length > 0;
+                    const authorDisplayName = msg.author?.full_name || msg.author?.fullName || msg.author?.name || 'Member';
 
                     return (
                       <div 
@@ -1049,7 +1070,7 @@ export default function Communities() {
                           <button onClick={() => setReplyingTo(msg)} className="btn btn-ghost" style={{ padding: '3px 4px', color: 'var(--text-muted)' }} title="Reply">
                             <CornerDownRight size={13} />
                           </button>
-                          {(isAuthor || user?.role === 'admin') && (
+                          {canDelete && (
                             <button onClick={() => handleDeleteMessage(msg.id || msg._id)} className="btn btn-ghost" style={{ padding: '3px 4px', color: 'var(--error-500)' }} title="Delete">
                               <Trash2 size={13} />
                             </button>
@@ -1063,7 +1084,7 @@ export default function Communities() {
                               <span className="badge badge-purple" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <Megaphone size={12} /> Official Broadcast
                               </span>
-                              <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>{msg.author?.full_name || 'Faculty / Admin'}</strong>
+                              <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>{authorDisplayName}</strong>
                               <CheckCircle2 size={14} color="var(--accent-500)" />
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1077,12 +1098,22 @@ export default function Communities() {
                               >
                                 View Notice &rarr;
                               </button>
+                              {canDelete && (
+                                <button
+                                  onClick={() => handleDeleteMessage(msg.id || msg._id)}
+                                  className="btn btn-ghost btn-sm"
+                                  style={{ padding: '2px 4px', color: 'var(--error-500)' }}
+                                  title="Delete broadcast"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
                             </div>
                           </div>
                         ) : (
                           /* Standard Discord Avatar */
                           <div className="avatar-placeholder avatar-md" style={{ flexShrink: 0, marginTop: '2px' }}>
-                            {msg.author?.full_name?.slice(0, 2).toUpperCase() || 'U'}
+                            {authorDisplayName?.slice(0, 2).toUpperCase() || 'U'}
                           </div>
                         )}
 
@@ -1090,23 +1121,37 @@ export default function Communities() {
                           
                           {/* Standard Message Header */}
                           {!isAnnouncement && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                              <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
-                                {msg.author?.full_name || 'Member'}
-                              </strong>
-                              {msg.author?.role === 'admin' && (
-                                <span className="badge badge-accent" style={{ fontSize: '0.65rem', padding: '1px 6px' }}>Admin</span>
-                              )}
-                              {msg.author?.role === 'faculty' && (
-                                <span className="badge badge-cyan" style={{ fontSize: '0.65rem', padding: '1px 6px' }}>Faculty</span>
-                              )}
-                              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                              {msg.is_pinned && (
-                                <span style={{ fontSize: '0.7rem', color: 'var(--accent-500)', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                                  <Pin size={11} /> Pinned
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
+                                  {authorDisplayName}
+                                </strong>
+                                {msg.author?.role === 'admin' && (
+                                  <span className="badge badge-accent" style={{ fontSize: '0.65rem', padding: '1px 6px' }}>Admin</span>
+                                )}
+                                {msg.author?.role === 'faculty' && (
+                                  <span className="badge badge-cyan" style={{ fontSize: '0.65rem', padding: '1px 6px' }}>Faculty</span>
+                                )}
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
+                                {msg.is_pinned ? (
+                                  <span style={{ fontSize: '0.7rem', color: 'var(--accent-500)', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                    <Pin size={11} /> Pinned
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              {/* Visible delete button: strictly for the sender (or admin) */}
+                              {canDelete && (
+                                <button
+                                  onClick={() => handleDeleteMessage(msg.id || msg._id)}
+                                  className="btn btn-ghost"
+                                  style={{ padding: '2px 6px', color: 'var(--error-500)', opacity: 0.8 }}
+                                  title="Delete your message"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
                               )}
                             </div>
                           )}

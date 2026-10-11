@@ -7,7 +7,14 @@ const router = express.Router();
 // Get feed posts
 // Helper function to enrich post with author, reactions, saved state, and all comments
 function enrichPost(post, currentUserId) {
-  const author = findById('users', post.user_id);
+  let author = findById('users', post.user_id);
+  if (!author && post.user_id === currentUserId) {
+    author = findById('users', currentUserId);
+  }
+  const authorName = author?.full_name || author?.fullName || author?.name || post.author_name || 'ECE Member';
+  const authorHeadline = author?.headline || 'ECE Department • RIT Chennai';
+  const authorPhoto = author?.profile_photo || author?.avatar || '';
+
   const userReaction = findOne('reactions', { post_id: post.id, user_id: currentUserId });
   const isSaved = !!findOne('saved_posts', { post_id: post.id, user_id: currentUserId });
   const allComments = findAll('comments', { post_id: post.id })
@@ -17,21 +24,22 @@ function enrichPost(post, currentUserId) {
     const commentAuthor = findById('users', c.user_id);
     const commentLikes = findAll('reactions', { comment_id: c.id });
     const isCommentLiked = !!findOne('reactions', { comment_id: c.id, user_id: currentUserId });
+    const cAuthorName = commentAuthor?.full_name || commentAuthor?.fullName || commentAuthor?.name || 'ECE Member';
     return {
       ...c,
       _id: c.id,
       likes_count: (c.likes_count || 0) + commentLikes.length,
       isLiked: isCommentLiked,
-      author: commentAuthor ? {
-        id: commentAuthor.id,
-        _id: commentAuthor.id,
-        full_name: commentAuthor.full_name,
-        fullName: commentAuthor.full_name,
-        profile_photo: commentAuthor.profile_photo,
-        avatar: commentAuthor.profile_photo,
-        headline: commentAuthor.headline,
-        verification_status: commentAuthor.verification_status,
-      } : null,
+      author: {
+        id: c.user_id,
+        _id: c.user_id,
+        full_name: cAuthorName,
+        fullName: cAuthorName,
+        profile_photo: commentAuthor?.profile_photo || commentAuthor?.avatar || '',
+        avatar: commentAuthor?.profile_photo || commentAuthor?.avatar || '',
+        headline: commentAuthor?.headline || '',
+        verification_status: commentAuthor?.verification_status,
+      },
     };
   });
 
@@ -44,17 +52,17 @@ function enrichPost(post, currentUserId) {
   return {
     ...post,
     _id: post.id,
-    author: author ? {
-      id: author.id,
-      _id: author.id,
-      full_name: author.full_name,
-      fullName: author.full_name,
-      profile_photo: author.profile_photo,
-      avatar: author.profile_photo,
-      headline: author.headline,
-      verification_status: author.verification_status,
-      account_type: author.account_type,
-    } : null,
+    author: {
+      id: post.user_id,
+      _id: post.user_id,
+      full_name: authorName,
+      fullName: authorName,
+      profile_photo: authorPhoto,
+      avatar: authorPhoto,
+      headline: authorHeadline,
+      verification_status: author?.verification_status,
+      account_type: author?.account_type || author?.role || 'student',
+    },
     userReaction: userReaction ? userReaction.type : null,
     isSaved,
     comments,
@@ -124,9 +132,13 @@ router.post('/', (req, res) => {
       return res.status(400).json({ error: 'Post must have content or media' });
     }
     
+    const author = findById('users', req.user.id);
+    const authorName = author?.full_name || author?.fullName || author?.name || req.user.full_name || 'ECE Member';
+    
     const post = {
       id: uuidv4(),
       user_id: req.user.id,
+      author_name: authorName,
       content: content || '',
       post_type: post_type || (media ? 'media' : 'text'),
       media: media || '',
