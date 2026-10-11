@@ -1,0 +1,49 @@
+.rit-logo-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.rit-logo-img {
+  display: block;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  transition: transform var(--transition-fast, 150ms ease);
+}
+
+.rit-logo-wrapper:hover .rit-logo-img {
+  transform: scale(1.02);
+}
+
+/* Light Mode: display dark text logo, hide white text logo */
+.rit-logo-light {
+  display: block !important;
+}
+
+.rit-logo-dark {
+  display: none !important;
+}
+
+/* Dark Mode: display white text logo, hide dark text logo */
+[data-theme="dark"] .rit-logo-light {
+  display: none !important;
+}
+
+[data-theme="dark"] .rit-logo-dark {
+  display: block !important;
+}
+
+/* Force white logo on explicitly dark containers */
+.theme-dark-forced .rit-logo-light {
+  display: none !important;
+}
+
+.theme-dark-forced .rit-logo-dark {
+  display: block !important;
+}
