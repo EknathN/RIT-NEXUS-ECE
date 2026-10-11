@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 import '../models/post_model.dart';
 import '../models/job_model.dart';
@@ -38,13 +39,40 @@ class ApiService {
     return headers;
   }
 
+  static const String approvedDomain = 'ece.ritchennai.edu.in';
+  static const String supabaseUrl = 'https://cbburujwqsiftywbagwl.supabase.co';
+  static const String supabaseAnonKey = 'sb_publishable_GYhcFKUZnUWjNPJCsBsPZw_JYwnMzyg';
+
+  static String normalizeEmail(String email) {
+    return email.trim().toLowerCase();
+  }
+
+  static bool isValidCollegeEmail(String email) {
+    final normalized = normalizeEmail(email);
+    final parts = normalized.split('@');
+    if (parts.length != 2) return false;
+    final local = parts[0];
+    final domain = parts[1];
+    if (local.isEmpty) return false;
+    return domain == approvedDomain;
+  }
+
   // --- AUTHENTICATION ---
   Future<UserModel> login(String email, String password) async {
+    final normalized = normalizeEmail(email);
+
+    // Strict domain check
+    if (!isValidCollegeEmail(normalized)) {
+      throw Exception(
+        'Access denied: Only official college email addresses ending with @$approvedDomain are permitted.',
+      );
+    }
+
     try {
       final res = await http.post(
         Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode({'email': normalized, 'password': password}),
       );
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -62,23 +90,88 @@ class ApiService {
         throw Exception(err['error'] ?? 'Authentication failed');
       }
     } catch (e) {
-      // Fallback for offline or local preview
-      if (email.contains('@')) {
-        final role = email.contains('admin')
-            ? 'admin'
-            : (email.contains('priya') ? 'alumni' : 'student');
-        _token = 'demo_token_${DateTime.now().millisecondsSinceEpoch}';
-        _currentUser = UserModel(
-          id: 'demo_user_id',
-          email: email,
-          fullName: email.split('@')[0].toUpperCase(),
-          headline: 'ECE Professional @ RIT Chennai',
-          role: role,
-          verificationStatus: 'verified',
-        );
-        return _currentUser!;
+      // If error was already domain failure, propagate
+      if (e.toString().contains('Access denied')) {
+        rethrow;
       }
+
+      // Check Supabase directly if backend REST is not reachable
+      try {
+        final sb = Supabase.instance.client;
+        final authRes = await sb.auth.signInWithPassword(
+          email: normalized,
+          password: password,
+        );
+        if (authRes.user != null) {
+          if (authRes.user!.emailConfirmedAt == null) {
+            await sb.auth.signOut();
+            throw Exception('Please confirm your @$approvedDomain email before accessing the platform.');
+          }
+          _token = authRes.session?.accessToken;
+          _currentUser = UserModel(
+            id: authRes.user!.id,
+            email: normalized,
+            fullName: authRes.user!.userMetadata?['full_name'] ?? normalized.split('@')[0],
+            headline: 'ECE Professional @ RIT Chennai',
+            role: authRes.user!.userMetadata?['role'] ?? 'student',
+            verificationStatus: 'verified',
+          );
+          return _currentUser!;
+        }
+      } catch (sbE) {
+        if (sbE.toString().contains('confirm your')) rethrow;
+      }
+
       rethrow;
+    }
+  }
+
+  Future<void> register({
+    required String email,
+    required String password,
+    required String fullName,
+    String accountType = 'student',
+  }) async {
+    final normalized = normalizeEmail(email);
+
+    if (!isValidCollegeEmail(normalized)) {
+      throw Exception(
+        'Registration denied: Only official college email addresses ending with @$approvedDomain are permitted.',
+      );
+    }
+
+    // Try Supabase Auth
+    try {
+      final sb = Supabase.instance.client;
+      await sb.auth.signUp(
+        email: normalized,
+        password: password,
+        data: {'full_name': fullName, 'role': accountType},
+      );
+    } catch (_) {}
+
+    // Register with backend REST
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': normalized,
+        'password': password,
+        'full_name': fullName,
+        'account_type': accountType,
+      }),
+    );
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      final data = jsonDecode(res.body);
+      _token = data['token'];
+      _currentUser = UserModel.fromJson(data['user']);
+      final prefs = await SharedPreferences.getInstance();
+      if (_token != null) await prefs.setString('auth_token', _token!);
+      await prefs.setString('auth_user', jsonEncode(_currentUser!.toJson()));
+    } else {
+      final err = jsonDecode(res.body);
+      throw Exception(err['error'] ?? 'Registration failed');
     }
   }
 

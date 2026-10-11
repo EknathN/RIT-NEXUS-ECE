@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { findOne, insert, update, getDb } from '../db/schema.js';
 import { generateToken } from '../middleware/auth.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { validateCollegeEmail, normalizeEmail, APPROVED_EMAIL_DOMAIN } from '../utils/domainValidator.js';
 
 const router = express.Router();
 
@@ -18,12 +19,19 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email, password, full name, and account type are required' });
     }
 
+    // Strict Domain Validation: Must be @ece.ritchennai.edu.in
+    const domainCheck = validateCollegeEmail(email);
+    if (!domainCheck.isValid) {
+      return res.status(400).json({ error: domainCheck.error });
+    }
+    const normalizedEmail = domainCheck.normalizedEmail;
+
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    // Check if user exists
-    const existing = findOne('users', { email });
+    // Check if user exists with normalized email
+    const existing = findOne('users', { email: normalizedEmail });
     if (existing) {
       return res.status(400).json({ error: 'Email already registered' });
     }
@@ -40,7 +48,7 @@ router.post('/register', async (req, res) => {
 
     const user = {
       id: userId,
-      email,
+      email: normalizedEmail,
       personal_email: personal_email || '',
       password: hashedPassword,
       full_name,
@@ -109,7 +117,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const user = findOne('users', { email });
+    const normalizedEmail = normalizeEmail(email);
+    const user = findOne('users', { email: normalizedEmail });
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -151,11 +160,11 @@ router.get('/me', authenticateToken, (req, res) => {
 // Forgot password (simplified - generates a reset token)
 router.post('/forgot-password', (req, res) => {
   const { email } = req.body;
-  const user = findOne('users', { email });
+  const normalizedEmail = normalizeEmail(email);
+  const user = findOne('users', { email: normalizedEmail });
   if (!user) {
     return res.json({ message: 'If an account exists, a reset link has been sent.' });
   }
-  // In production, send email with reset link
   res.json({ message: 'If an account exists, a reset link has been sent.' });
 });
 
@@ -163,8 +172,13 @@ router.post('/forgot-password', (req, res) => {
 router.post('/reset-password', async (req, res) => {
   try {
     const { email, new_password } = req.body;
-    const user = findOne('users', { email });
+    const normalizedEmail = normalizeEmail(email);
+    const user = findOne('users', { email: normalizedEmail });
     if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (!new_password || new_password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
 
     const hashedPassword = await bcrypt.hash(new_password, 12);
     update('users', user.id, { password: hashedPassword });

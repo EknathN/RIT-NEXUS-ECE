@@ -38,6 +38,7 @@ dependencies:
   # Networking and local storage
   http: ^1.2.0
   shared_preferences: ^2.2.2
+  supabase_flutter: ^2.18.2
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { Eye, EyeOff, Mail, Lock, User, GraduationCap, Briefcase, ChevronRight, ChevronLeft } from 'lucide-react';
 import RITLogo from '../components/RITLogo';
+import { validateCollegeEmail, APPROVED_EMAIL_DOMAIN } from '../services/supabaseClient';
 import './Auth.css';
 
 export default function Register() {
@@ -37,6 +38,14 @@ export default function Register() {
         toast.error('Please fill in required fields');
         return;
       }
+
+      // Strict Domain Validation
+      const emailDomainCheck = validateCollegeEmail(formData.email);
+      if (!emailDomainCheck.isValid) {
+        toast.error(emailDomainCheck.error);
+        return;
+      }
+
       if (formData.password.length < 6) {
         toast.error('Password must be at least 6 characters');
         return;
@@ -55,9 +64,14 @@ export default function Register() {
     setLoading(true);
     try {
       const { confirm_password, ...data } = formData;
-      await register(data);
-      toast.success('Welcome to RIT ECE! Your profile has been created.');
-      navigate('/home');
+      const result = await register(data);
+      if (result?.requiresConfirmation) {
+        toast.success(`Verification email sent to ${formData.email}! Please confirm your email to activate your account.`);
+        navigate('/login', { state: { message: `Verification email sent to ${formData.email}. Please verify your email before logging in.` } });
+      } else {
+        toast.success('Welcome to RIT ECE! Your profile has been created.');
+        navigate('/home');
+      }
     } catch (err) {
       toast.error(err.message || 'Registration failed');
     } finally {
@@ -125,12 +139,20 @@ export default function Register() {
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label">Email *</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label className="form-label">College Email *</label>
+                  <span style={{ fontSize: '11px', color: '#00E5FF', fontWeight: 600 }}>
+                    Must be @{APPROVED_EMAIL_DOMAIN}
+                  </span>
+                </div>
                 <div className="input-with-icon">
                   <Mail size={18} className="input-icon" />
-                  <input type="email" className="form-input" placeholder="your.email@ritchennai.edu.in" style={{ paddingLeft: '42px' }}
+                  <input type="email" className="form-input" placeholder="student@ece.ritchennai.edu.in" style={{ paddingLeft: '42px' }}
                     value={formData.email} onChange={(e) => updateField('email', e.target.value)} required />
                 </div>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Institutional email strictly required. Verification link will be sent.
+                </p>
               </div>
               <div className="form-row">
                 <div className="form-group">

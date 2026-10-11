@@ -11,7 +11,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'kavitha.s@ritchennai.edu.in');
+  final _emailController = TextEditingController(text: 'kavitha.s@ece.ritchennai.edu.in');
   final _passwordController = TextEditingController(text: 'password123');
   bool _isLoading = false;
   String? _errorMessage;
@@ -116,8 +116,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(color: AppTheme.textLight),
                   decoration: const InputDecoration(
-                    labelText: 'Institutional Email',
-                    hintText: 'e.g. name@ritchennai.edu.in',
+                    labelText: 'College Email (@ece.ritchennai.edu.in)',
+                    hintText: 'student@ece.ritchennai.edu.in',
                     prefixIcon: Icon(Icons.email_outlined, color: AppTheme.accentCyan),
                   ),
                 ),
@@ -152,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Divider(color: AppTheme.borderDark),
                 const SizedBox(height: 12),
                 const Text(
-                  'QUICK DEMO ACCESS (ECE ECOSYSTEM)',
+                  'APPROVED DOMAIN ACCESS (@ece.ritchennai.edu.in)',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 11,
@@ -167,21 +167,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   title: 'Final Year Student (Kavitha)',
                   subtitle: 'VLSI & Embedded Systems Specialist',
                   icon: Icons.school,
-                  email: 'kavitha.s@ritchennai.edu.in',
+                  email: 'kavitha.s@ece.ritchennai.edu.in',
                 ),
                 const SizedBox(height: 8),
                 _demoButton(
                   title: 'Alumni (Priya Krishnan)',
                   subtitle: 'Sr. Silicon Design Engineer @ Intel',
                   icon: Icons.work,
-                  email: 'priya.k@ritchennai.edu.in',
+                  email: 'priya.k@ece.ritchennai.edu.in',
                 ),
                 const SizedBox(height: 8),
                 _demoButton(
                   title: 'Department Admin / HOD',
                   subtitle: 'ECE Command Center & Moderation',
                   icon: Icons.admin_panel_settings,
-                  email: 'admin@ritchennai.edu.in',
+                  email: 'admin@ece.ritchennai.edu.in',
                 ),
               ],
             ),

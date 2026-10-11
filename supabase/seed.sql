@@ -14,21 +14,21 @@
 -- 1. Insert into auth.users (Supabase Auth Mock)
 INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_user_meta_data)
 VALUES
-    ('00000000-0000-0000-0000-000000000001', 'admin@ritchennai.edu.in', crypt('password123', gen_salt('bf')), now(), '{"full_name": "Dr. ECE HOD", "role": "admin"}'),
-    ('00000000-0000-0000-0000-000000000002', 'priya.k@ritchennai.edu.in', crypt('password123', gen_salt('bf')), now(), '{"full_name": "Priya Krishnan", "role": "alumni"}'),
-    ('00000000-0000-0000-0000-000000000003', 'kavitha.s@ritchennai.edu.in', crypt('password123', gen_salt('bf')), now(), '{"full_name": "Kavitha Sundaram", "role": "student"}'),
-    ('00000000-0000-0000-0000-000000000004', 'rahul.m@ritchennai.edu.in', crypt('password123', gen_salt('bf')), now(), '{"full_name": "Rahul Manikandan", "role": "student"}'),
-    ('00000000-0000-0000-0000-000000000005', 'arunkumar.v@ritchennai.edu.in', crypt('password123', gen_salt('bf')), now(), '{"full_name": "Dr. V. Arunkumar", "role": "faculty"}')
+    ('00000000-0000-0000-0000-000000000001', 'admin@ece.ritchennai.edu.in', crypt('password123', gen_salt('bf')), now(), '{"full_name": "Dr. ECE HOD", "role": "admin"}'),
+    ('00000000-0000-0000-0000-000000000002', 'priya.k@ece.ritchennai.edu.in', crypt('password123', gen_salt('bf')), now(), '{"full_name": "Priya Krishnan", "role": "alumni"}'),
+    ('00000000-0000-0000-0000-000000000003', 'kavitha.s@ece.ritchennai.edu.in', crypt('password123', gen_salt('bf')), now(), '{"full_name": "Kavitha Sundaram", "role": "student"}'),
+    ('00000000-0000-0000-0000-000000000004', 'rahul.m@ece.ritchennai.edu.in', crypt('password123', gen_salt('bf')), now(), '{"full_name": "Rahul Manikandan", "role": "student"}'),
+    ('00000000-0000-0000-0000-000000000005', 'arunkumar.v@ece.ritchennai.edu.in', crypt('password123', gen_salt('bf')), now(), '{"full_name": "Dr. V. Arunkumar", "role": "faculty"}')
 ON CONFLICT (id) DO NOTHING;
 
 -- 2. Insert Profiles
 INSERT INTO public.profiles (id, email, full_name, headline, bio, role, verification_status, batch_year, graduation_year, current_company, current_position, location)
 VALUES
-    ('00000000-0000-0000-0000-000000000001', 'admin@ritchennai.edu.in', 'Dr. ECE HOD', 'Head of Department, ECE | Rajalakshmi Institute of Technology', 'Leading educational innovation, research grants, and industry collaborations at RIT Chennai ECE Department.', 'admin', 'verified', 2010, 2014, 'Rajalakshmi Institute of Technology', 'Professor & HOD', 'Chennai, Tamil Nadu'),
-    ('00000000-0000-0000-0000-000000000002', 'priya.k@ritchennai.edu.in', 'Priya Krishnan', 'Senior Silicon Design Engineer @ Intel | RIT ECE 2019 Batch', 'Specializing in RTL Design, SystemVerilog, UVM verification, and low-power ASIC architectures.', 'alumni', 'verified', 2015, 2019, 'Intel Corporation', 'Senior Silicon Design Engineer', 'Bengaluru, Karnataka'),
-    ('00000000-0000-0000-0000-000000000003', 'kavitha.s@ritchennai.edu.in', 'Kavitha Sundaram', 'Final Year ECE Student @ RIT | VLSI & Embedded Systems Enthusiast', 'Passionate about FPGA prototyping, RISC-V core development, and TinyML on edge microcontrollers.', 'student', 'verified', 2021, 2025, 'Student', 'Undergraduate Researcher', 'Chennai, Tamil Nadu'),
-    ('00000000-0000-0000-0000-000000000004', 'rahul.m@ritchennai.edu.in', 'Rahul Manikandan', '3rd Year ECE @ RIT | Robotics, ROS2 & Autonomous Systems', 'Building autonomous mobile robots, computer vision pipelines, and IoT sensor arrays.', 'student', 'verified', 2022, 2026, 'Student', 'Robotics Club Lead', 'Chennai, Tamil Nadu'),
-    ('00000000-0000-0000-0000-000000000005', 'arunkumar.v@ritchennai.edu.in', 'Dr. V. Arunkumar', 'Associate Professor, ECE | VLSI & Nanotechnology Center Head', 'Faculty mentor guiding students in national hackathons, IEEE conferences, and MSME incubation grants.', 'faculty', 'verified', 2012, 2016, 'Rajalakshmi Institute of Technology', 'Associate Professor', 'Chennai, Tamil Nadu')
+    ('00000000-0000-0000-0000-000000000001', 'admin@ece.ritchennai.edu.in', 'Dr. ECE HOD', 'Head of Department, ECE | Rajalakshmi Institute of Technology', 'Leading educational innovation, research grants, and industry collaborations at RIT Chennai ECE Department.', 'admin', 'verified', 2010, 2014, 'Rajalakshmi Institute of Technology', 'Professor & HOD', 'Chennai, Tamil Nadu'),
+    ('00000000-0000-0000-0000-000000000002', 'priya.k@ece.ritchennai.edu.in', 'Priya Krishnan', 'Senior Silicon Design Engineer @ Intel | RIT ECE 2019 Batch', 'Specializing in RTL Design, SystemVerilog, UVM verification, and low-power ASIC architectures.', 'alumni', 'verified', 2015, 2019, 'Intel Corporation', 'Senior Silicon Design Engineer', 'Bengaluru, Karnataka'),
+    ('00000000-0000-0000-0000-000000000003', 'kavitha.s@ece.ritchennai.edu.in', 'Kavitha Sundaram', 'Final Year ECE Student @ RIT | VLSI & Embedded Systems Enthusiast', 'Passionate about FPGA prototyping, RISC-V core development, and TinyML on edge microcontrollers.', 'student', 'verified', 2021, 2025, 'Student', 'Undergraduate Researcher', 'Chennai, Tamil Nadu'),
+    ('00000000-0000-0000-0000-000000000004', 'rahul.m@ece.ritchennai.edu.in', 'Rahul Manikandan', '3rd Year ECE @ RIT | Robotics, ROS2 & Autonomous Systems', 'Building autonomous mobile robots, computer vision pipelines, and IoT sensor arrays.', 'student', 'verified', 2022, 2026, 'Student', 'Robotics Club Lead', 'Chennai, Tamil Nadu'),
+    ('00000000-0000-0000-0000-000000000005', 'arunkumar.v@ece.ritchennai.edu.in', 'Dr. V. Arunkumar', 'Associate Professor, ECE | VLSI & Nanotechnology Center Head', 'Faculty mentor guiding students in national hackathons, IEEE conferences, and MSME incubation grants.', 'faculty', 'verified', 2012, 2016, 'Rajalakshmi Institute of Technology', 'Associate Professor', 'Chennai, Tamil Nadu')
 ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     headline = EXCLUDED.headline,
