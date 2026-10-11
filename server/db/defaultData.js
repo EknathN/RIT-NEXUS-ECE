@@ -1,0 +1,269 @@
+export const defaultData = {
+  "users": [
+    {
+      "id": "9be69d91-0c3b-48ba-bca2-005531a4d3eb",
+      "email": "admin@ece.ritchennai.edu.in",
+      "personal_email": "",
+      "password": "$2a$12$JEMntyohoiXjOve39F9iNOAysq0CY3aPWwqSKUU/jh4Rvt.zU1WBK",
+      "full_name": "Admin RIT ECE",
+      "phone": "9876543210",
+      "role": "admin",
+      "account_type": "faculty",
+      "register_number": "ADMIN001",
+      "batch": "2024",
+      "year": "",
+      "section": "",
+      "department": "ECE",
+      "graduation_year": "",
+      "profile_photo": "",
+      "cover_photo": "",
+      "headline": "ECE Department Platform Administrator",
+      "bio": "Official Administrator of RIT ECE Professional Networking Platform.",
+      "date_of_birth": "",
+      "gender": "",
+      "location": "Chennai, Tamil Nadu",
+      "current_company": "Rajalakshmi Institute of Technology",
+      "job_title": "Department Administrator",
+      "industry": "Higher Education",
+      "github": "",
+      "linkedin": "",
+      "portfolio": "",
+      "twitter": "",
+      "resume": "",
+      "verification_status": "verified",
+      "is_active": 1,
+      "is_suspended": 0,
+      "profile_completion": 100,
+      "privacy_profile": "everyone",
+      "privacy_email": "connections",
+      "privacy_phone": "only_me",
+      "privacy_message": "everyone",
+      "privacy_connection": "everyone",
+      "mentoring_available": 0,
+      "mentoring_career": 0,
+      "mentoring_referrals": 0,
+      "mentoring_projects": 0,
+      "mentoring_lectures": 0,
+      "theme": "system",
+      "last_active": "2026-10-11T17:02:53.715Z",
+      "created_at": "2026-10-11T07:00:00.000Z",
+      "updated_at": "2026-10-11T17:02:53.715Z"
+    },
+    {
+      "id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "email": "eknathnuvvula.250059@ece.ritchennai.edu.in",
+      "personal_email": "",
+      "password": "$2a$12$Beg9Je7pUslNaioYqWYxsuykrDWf/RQpot7Bj2476uaHJ9iMpYS3u",
+      "full_name": "Eknath Nuvvula",
+      "phone": "8667338512",
+      "role": "user",
+      "account_type": "student",
+      "register_number": "2117250040059",
+      "batch": "2025 - 2029",
+      "year": "2",
+      "section": "A",
+      "department": "ECE",
+      "graduation_year": "2029",
+      "profile_photo": "",
+      "cover_photo": "",
+      "headline": "ECE 2nd Year",
+      "bio": "",
+      "date_of_birth": "",
+      "gender": "",
+      "location": "Chennai, Tamil Nadu",
+      "current_company": "",
+      "job_title": "",
+      "industry": "",
+      "github": "https://github.com/EknathN",
+      "linkedin": "https://www.linkedin.com/in/eknathnuvvula",
+      "portfolio": "",
+      "twitter": "",
+      "resume": "",
+      "verification_status": "pending",
+      "is_active": 1,
+      "is_suspended": 0,
+      "profile_completion": 35,
+      "privacy_profile": "everyone",
+      "privacy_email": "connections",
+      "privacy_phone": "only_me",
+      "privacy_message": "everyone",
+      "privacy_connection": "everyone",
+      "mentoring_available": 0,
+      "mentoring_career": 0,
+      "mentoring_referrals": 0,
+      "mentoring_projects": 0,
+      "mentoring_lectures": 0,
+      "theme": "system",
+      "last_active": "2026-10-11T16:17:01.033Z",
+      "created_at": "2026-10-11T08:35:05.576Z",
+      "updated_at": "2026-10-11T16:17:01.033Z",
+      "visibility": {
+        "profileVisibleToPublic": true,
+        "showEmail": true,
+        "showPhone": true
+      },
+      "skills": [
+        "c"
+      ],
+      "socialLinks": {
+        "linkedin": "https://www.linkedin.com/in/eknathnuvvula",
+        "github": "https://github.com/EknathN",
+        "portfolio": ""
+      },
+      "isAvailableForMentoring": false,
+      "mentoringTopics": [],
+      "interests": [],
+      "experiences": [
+        {
+          "title": "manager",
+          "company": "google",
+          "location": "",
+          "startDate": "",
+          "endDate": "",
+          "current": false,
+          "description": "hbgvghghbjhbjhbhj"
+        }
+      ],
+      "education": [],
+      "projects": [],
+      "certifications": [],
+      "avatar": ""
+    }
+  ],
+  "education": [],
+  "experience": [],
+  "skills": [],
+  "projects": [],
+  "certifications": [],
+  "achievements": [],
+  "connections": [
+    {
+      "id": "4a3da680-e876-4a9c-a63c-169881708510",
+      "sender_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "receiver_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "status": "pending",
+      "created_at": "2026-10-11T09:19:30.424Z",
+      "updated_at": "2026-10-11T09:19:30.424Z"
+    }
+  ],
+  "followers": [],
+  "posts": [],
+  "reactions": [],
+  "comments": [],
+  "saved_posts": [],
+  "conversations": [
+    {
+      "id": "8ee11d27-a6dc-4d78-b38f-50756c16861e",
+      "user1_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "user2_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "last_message": "[Ask a Senior • Project Guidance & ECE Course Prep] Hello Eknath Nuvvula, I am an ECE student at RIT. I saw your expertise in Embedded Systems & IoT and would love your advice and mentorship guidance.",
+      "last_message_at": "2026-10-11T09:19:30.424Z",
+      "created_at": "2026-10-11T09:19:30.424Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "4129da3f-deb7-43d7-99f4-d7b935f24085",
+      "conversation_id": "8ee11d27-a6dc-4d78-b38f-50756c16861e",
+      "sender_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "content": "🎓 **[Ask a Senior Guidance Request]**\n**Topic:** Project Guidance & ECE Course Prep\n**Domain:** Embedded Systems & IoT\n\nHello Eknath Nuvvula, I am an ECE student at RIT. I saw your expertise in Embedded Systems & IoT and would love your advice and mentorship guidance.",
+      "is_read": 0,
+      "created_at": "2026-10-11T09:19:30.424Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "a6531dcc-6cbe-4945-b525-25f5d9e60e4c",
+      "user_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "from_user_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "type": "mentorship_request",
+      "title": "Ask a Senior: Guidance in Project Guidance & ECE Course Prep",
+      "message": "Eknath Nuvvula asked for your mentorship guidance on: \"Project Guidance & ECE Course Prep\"",
+      "link": "/messages/403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "is_read": 0,
+      "created_at": "2026-10-11T09:19:30.424Z"
+    }
+  ],
+  "jobs": [],
+  "hackathons": [],
+  "incubation_programs": [],
+  "workshops": [],
+  "events": [],
+  "event_registrations": [],
+  "communities": [
+    {
+      "id": "comm-ece-official",
+      "name": "RIT ECE Department Official",
+      "slug": "rit-ece-official",
+      "description": "Official community for students, faculty, and alumni of Electronics and Communication Engineering at Rajalakshmi Institute of Technology.",
+      "category": "Official",
+      "icon": "Radio",
+      "banner_image": "",
+      "created_by": "9be69d91-0c3b-48ba-bca2-005531a4d3eb",
+      "is_private": 0,
+      "member_count": 2,
+      "post_count": 0,
+      "created_at": "2026-10-11T07:00:00.000Z",
+      "updated_at": "2026-10-11T09:17:35.133Z"
+    }
+  ],
+  "community_channels": [
+    {
+      "id": "chan-announcements",
+      "community_id": "comm-ece-official",
+      "name": "general-announcements",
+      "description": "Official announcements from ECE HOD & Faculty",
+      "type": "announcements",
+      "is_locked": 0,
+      "created_at": "2026-10-11T07:00:00.000Z"
+    }
+  ],
+  "community_messages": [],
+  "community_members": [
+    {
+      "id": "cm-admin",
+      "community_id": "comm-ece-official",
+      "user_id": "9be69d91-0c3b-48ba-bca2-005531a4d3eb",
+      "role": "admin",
+      "joined_at": "2026-10-11T07:00:00.000Z"
+    },
+    {
+      "id": "66d9b9a1-82fb-460c-bc13-24b9403eb113",
+      "community_id": "comm-ece-official",
+      "user_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "role": "member",
+      "created_at": "2026-10-11T09:17:35.133Z"
+    }
+  ],
+  "mentorship_requests": [
+    {
+      "id": "fe27dc90-5276-47f7-a8a2-e42d9e5ad812",
+      "student_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "senior_id": "403c258b-257f-45ee-b3b3-9344d34fc0cf",
+      "topic": "Project Guidance & ECE Course Prep",
+      "domain": "Embedded Systems & IoT",
+      "message": "Hello Eknath Nuvvula, I am an ECE student at RIT. I saw your expertise in Embedded Systems & IoT and would love your advice and mentorship guidance.",
+      "status": "pending",
+      "created_at": "2026-10-11T09:19:30.424Z"
+    }
+  ],
+  "documents": [],
+  "reports": [],
+  "announcements": [
+    {
+      "id": "ann-welcome",
+      "title": "Welcome to RIT ECE Professional Network (2026)",
+      "content": "Welcome to the official department networking platform for RIT ECE 2nd, 3rd, 4th years, and Alumni! Connect with your peers, join mentor circles, and explore opportunities.",
+      "author_id": "9be69d91-0c3b-48ba-bca2-005531a4d3eb",
+      "author_name": "Department of ECE",
+      "priority": "high",
+      "category": "General",
+      "is_pinned": 1,
+      "created_at": "2026-10-11T07:00:00.000Z"
+    }
+  ],
+  "saved_jobs": [],
+  "job_applications": [],
+  "languages": [],
+  "interests": []
+};

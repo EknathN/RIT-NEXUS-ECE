@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { defaultData } from './defaultData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -8,42 +9,9 @@ const __dirname = path.dirname(__filename);
 const DB_DIR = (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) ? '/tmp' : __dirname;
 const DB_PATH = path.join(DB_DIR, 'ritece.json');
 
-// In-memory database that persists to JSON file
+// In-memory database initialized from defaultData
 let database = {
-  users: [],
-  education: [],
-  experience: [],
-  skills: [],
-  projects: [],
-  certifications: [],
-  achievements: [],
-  connections: [],
-  followers: [],
-  posts: [],
-  reactions: [],
-  comments: [],
-  saved_posts: [],
-  conversations: [],
-  messages: [],
-  notifications: [],
-  jobs: [],
-  hackathons: [],
-  incubation_programs: [],
-  workshops: [],
-  events: [],
-  event_registrations: [],
-  communities: [],
-  community_channels: [],
-  community_messages: [],
-  community_members: [],
-  mentorship_requests: [],
-  documents: [],
-  reports: [],
-  announcements: [],
-  saved_jobs: [],
-  job_applications: [],
-  languages: [],
-  interests: [],
+  ...defaultData,
 };
 
 // Load database from file
@@ -52,22 +20,18 @@ function loadDb() {
     if (fs.existsSync(DB_PATH)) {
       const data = fs.readFileSync(DB_PATH, 'utf-8');
       const parsed = JSON.parse(data);
-      database = { ...database, ...parsed };
+      database = { ...defaultData, ...parsed };
     } else {
-      const bundledUrl = new URL('./ritece.json', import.meta.url);
-      if (fs.existsSync(bundledUrl)) {
-        const data = fs.readFileSync(bundledUrl, 'utf-8');
-        const parsed = JSON.parse(data);
-        database = { ...database, ...parsed };
-        try {
-          fs.writeFileSync(DB_PATH, JSON.stringify(database, null, 2));
-        } catch (e) {
-          // ignore read-only warnings
-        }
+      database = { ...defaultData };
+      try {
+        fs.writeFileSync(DB_PATH, JSON.stringify(database, null, 2));
+      } catch (e) {
+        // ignore read-only warnings in serverless
       }
     }
   } catch (err) {
-    console.log('Database load error:', err.message);
+    console.log('Database load fallback to defaultData:', err.message);
+    database = { ...defaultData };
   }
 }
 
