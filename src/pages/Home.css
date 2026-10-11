@@ -580,11 +580,11 @@
 /* Mobile Responsive (Mobile Web UI Optimizations) */
 @media (max-width: 768px) {
   .post-card {
-    padding: 12px 12px 6px 12px !important;
+    padding: clamp(10px, 2.5vw, 14px) clamp(10px, 2.5vw, 14px) 6px clamp(10px, 2.5vw, 14px) !important;
     margin-bottom: 12px;
   }
   .create-post-card {
-    padding: 12px 12px 8px 12px !important;
+    padding: clamp(10px, 2.5vw, 14px) clamp(10px, 2.5vw, 14px) 8px clamp(10px, 2.5vw, 14px) !important;
     margin-bottom: 12px;
   }
   .create-post-top {
@@ -593,7 +593,7 @@
   .create-post-input {
     min-height: 40px;
     padding: 8px 14px;
-    font-size: 0.84rem;
+    font-size: 16px; /* Prevents iOS Safari auto-zoom */
   }
   .create-post-actions {
     flex-wrap: wrap;
@@ -603,10 +603,11 @@
   }
   .create-post-media {
     gap: 4px;
+    flex-wrap: wrap;
   }
   .media-trigger-btn {
-    padding: 5px 8px;
-    font-size: 0.75rem;
+    padding: 5px clamp(6px, 1.5vw, 10px);
+    font-size: clamp(0.72rem, 2vw, 0.78rem);
     gap: 4px;
   }
   .media-trigger-btn svg {
@@ -616,12 +617,20 @@
   .feed-filter-bar {
     margin-bottom: 12px;
     padding: 3px;
-    gap: 4px;
+    gap: clamp(2px, 1vw, 6px);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .feed-filter-bar::-webkit-scrollbar {
+    display: none;
   }
   .feed-filter-btn {
-    padding: 6px 4px;
-    font-size: 0.75rem;
+    padding: 6px clamp(4px, 1.5vw, 8px);
+    font-size: clamp(0.72rem, 2.2vw, 0.8rem);
     gap: 4px;
+    flex: 1 1 auto;
+    white-space: nowrap;
   }
   .feed-filter-btn svg {
     width: 14px;
@@ -641,25 +650,35 @@
     font-size: 0.88rem;
     line-height: 1.5;
     margin-bottom: 8px;
+    word-break: break-word;
   }
   .post-actions {
     padding: 2px 0;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 2px;
   }
   .post-action {
     padding: 6px 2px;
-    gap: 4px;
-    font-size: 0.75rem;
+    gap: clamp(2px, 1vw, 5px);
+    font-size: clamp(0.68rem, 2.3vw, 0.78rem);
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex: 1 1 0;
+    min-width: 0;
   }
   .post-action span {
     display: inline;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .post-action svg {
-    width: 15px;
-    height: 15px;
+    width: clamp(14px, 3.8vw, 16px);
+    height: clamp(14px, 3.8vw, 16px);
+    flex-shrink: 0;
   }
   .comment-input-row {
     gap: 8px;
@@ -667,25 +686,21 @@
   }
   .comment-input {
     padding: 7px 34px 7px 12px;
-    font-size: 0.78rem;
+    font-size: 16px; /* Prevents iOS Safari auto-zoom */
   }
 }
 
 @media (max-width: 380px) {
   .post-action {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     gap: 2px;
-  }
-  .post-action svg {
-    width: 14px;
-    height: 14px;
   }
   .feed-filter-btn {
     font-size: 0.7rem;
-    padding: 5px 2px;
+    padding: 5px 4px;
   }
   .media-trigger-btn {
     padding: 4px 6px;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
   }
 }

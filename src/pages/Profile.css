@@ -366,11 +366,19 @@
 
 @media (max-width: 480px) {
   .profile-cover {
-    height: 100px;
+    height: clamp(100px, 28vw, 150px);
+  }
+  .profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
   }
   .profile-actions .btn {
-    width: 100%;
-    flex: none;
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    padding: 7px 10px;
+    font-size: 0.8rem;
   }
 }
 

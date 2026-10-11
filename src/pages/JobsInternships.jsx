@@ -243,21 +243,21 @@ export default function JobsInternships() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="card" style={{ marginBottom: 'var(--space-6)', padding: 'var(--space-4)' }}>
-        <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
-            <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+      <div className="card" style={{ marginBottom: 'var(--space-4)', padding: 'clamp(10px, 2.5vw, 14px)' }}>
+        <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: '1 1 180px', minWidth: '0', width: '100%' }}>
+            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
               type="text"
               className="form-input"
               placeholder="Search by role, company, or tech stack..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ paddingLeft: '38px' }}
+              style={{ paddingLeft: '36px' }}
             />
           </div>
 
-          <select className="form-select" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ width: 'auto' }}>
+          <select className="form-select" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} style={{ flex: '1 1 130px', minWidth: '0' }}>
             <option value="">All Types</option>
             <option value="internship">Internships</option>
             <option value="full-time">Full Time</option>
@@ -265,7 +265,7 @@ export default function JobsInternships() {
             <option value="research">Research / Lab</option>
           </select>
 
-          <select className="form-select" value={domainFilter} onChange={(e) => setDomainFilter(e.target.value)} style={{ width: 'auto' }}>
+          <select className="form-select" value={domainFilter} onChange={(e) => setDomainFilter(e.target.value)} style={{ flex: '1 1 140px', minWidth: '0' }}>
             <option value="">All ECE Domains</option>
             <option value="VLSI / Semiconductor">VLSI & Semiconductor</option>
             <option value="Embedded Systems">Embedded Systems & Firmware</option>
@@ -275,8 +275,8 @@ export default function JobsInternships() {
             <option value="Software / AI">Software & AI / ML</option>
           </select>
 
-          <button type="submit" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <Filter size={16} /> Filter
+          <button type="submit" className="btn btn-primary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flex: '0 0 auto' }}>
+            <Filter size={15} /> Filter
           </button>
         </form>
       </div>

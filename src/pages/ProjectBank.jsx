@@ -179,13 +179,13 @@ export default function ProjectBank() {
       </div>
 
       {/* Domain Filter Pills */}
-      <div style={{ marginBottom: 'var(--space-4)', display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+      <div style={{ marginBottom: 'var(--space-3)', display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
         {ECE_DOMAINS.map(domain => (
           <button
             key={domain}
             onClick={() => setSelectedDomain(domain)}
             className={`btn btn-sm ${selectedDomain === domain ? 'btn-primary' : 'btn-outline'}`}
-            style={{ borderRadius: 'var(--radius-full)', whiteSpace: 'nowrap', fontSize: '0.82rem' }}
+            style={{ borderRadius: 'var(--radius-full)', whiteSpace: 'nowrap', fontSize: '0.8rem', flexShrink: 0 }}
           >
             {domain}
           </button>
@@ -193,39 +193,39 @@ export default function ProjectBank() {
       </div>
 
       {/* Search and Checkbox Filters */}
-      <div className="card" style={{ marginBottom: 'var(--space-6)', padding: 'var(--space-4)' }}>
-        <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: '260px' }}>
-            <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+      <div className="card" style={{ marginBottom: 'var(--space-4)', padding: 'clamp(10px, 2.5vw, 14px)' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ position: 'relative', flex: '1 1 200px', minWidth: '0', width: '100%' }}>
+            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
               type="text"
               className="form-input"
-              placeholder="Search projects by title, hardware (STM32, FPGA, LoRa, ESP32), or skills..."
+              placeholder="Search projects by title, hardware (STM32, FPGA, LoRa), or skills..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ paddingLeft: '38px' }}
+              style={{ paddingLeft: '36px' }}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap', alignItems: 'center' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)' }}>
               <input
                 type="checkbox"
                 checked={filterTeammatesOnly}
                 onChange={(e) => setFilterTeammatesOnly(e.target.checked)}
                 style={{ width: '16px', height: '16px' }}
               />
-              <Users size={16} color="var(--accent-500)" /> Looking for Teammates
+              <Users size={15} color="var(--accent-500)" /> Teammates Wanted
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)' }}>
               <input
                 type="checkbox"
                 checked={filterContinuationOnly}
                 onChange={(e) => setFilterContinuationOnly(e.target.checked)}
                 style={{ width: '16px', height: '16px' }}
               />
-              <Heart size={16} color="#10B981" /> Pass It Forward Continuation Projects
+              <Heart size={15} color="#10B981" /> Pass It Forward Continuation
             </label>
           </div>
         </div>

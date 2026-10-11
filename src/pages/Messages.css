@@ -39,8 +39,8 @@
 /* Mobile Web UI Optimizations (Strictly <= 768px, PC web UI untouched) */
 @media (max-width: 768px) {
   .messages-container {
-    padding: 8px 10px !important;
-    height: calc(100vh - var(--navbar-height) - var(--mobile-nav-height) - 16px) !important;
+    padding: 6px clamp(6px, 2vw, 10px) !important;
+    height: calc(100dvh - var(--navbar-height) - env(safe-area-inset-top, 0px) - 58px - env(safe-area-inset-bottom, 0px) - 8px) !important;
   }
 
   .messages-card {

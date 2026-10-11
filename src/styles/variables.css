@@ -152,11 +152,17 @@
   --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* Layout Dimensions */
-  --navbar-height: 60px;
+  --navbar-height: 56px;
   --sidebar-width: 225px;
   --content-max-width: 1180px;
   --navbar-max-width: 1400px;
-  --mobile-nav-height: 64px;
+  --mobile-nav-height: 58px;
+
+  /* Safe Area Insets for All Mobile Phone Displays */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
 
   /* Z-Index */
   --z-dropdown: 100;

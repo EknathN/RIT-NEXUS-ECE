@@ -276,79 +276,82 @@ export default function MyNetwork() {
 
       {/* Main Feature Tabs */}
       <div
+        className="network-tabs-bar"
         style={{
           display: 'flex',
-          gap: 'var(--space-2)',
-          marginBottom: 'var(--space-6)',
+          gap: '8px',
+          marginBottom: 'var(--space-4)',
           borderBottom: '1px solid var(--border-color)',
-          paddingBottom: 'var(--space-2)',
+          paddingBottom: '8px',
           overflowX: 'auto',
           whiteSpace: 'nowrap',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
         }}
       >
         <button
-          className={`btn ${activeTab === 'mentors' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn btn-sm ${activeTab === 'mentors' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveTab('mentors')}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
         >
-          <GraduationCap size={18} /> Ask a Senior & Mentor Circles
+          <GraduationCap size={16} /> Ask Senior & Mentors
         </button>
 
         <button
-          className={`btn ${activeTab === 'suggestions' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn btn-sm ${activeTab === 'suggestions' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveTab('suggestions')}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
         >
-          <Compass size={18} /> Discover ECE Peers
+          <Compass size={16} /> Discover Peers
         </button>
 
         <button
-          className={`btn ${activeTab === 'alumni' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn btn-sm ${activeTab === 'alumni' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveTab('alumni')}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
         >
-          <Building size={18} /> Alumni Connect
+          <Building size={16} /> Alumni Connect
         </button>
 
         <button
-          className={`btn ${activeTab === 'requests' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn btn-sm ${activeTab === 'requests' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveTab('requests')}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
         >
-          <Clock size={18} /> Invitations ({requests.length})
+          <Clock size={16} /> Invitations ({requests.length})
         </button>
 
         <button
-          className={`btn ${activeTab === 'connections' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn btn-sm ${activeTab === 'connections' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveTab('connections')}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
         >
-          <UserCheck size={18} /> My Connections
+          <UserCheck size={16} /> My Connections
         </button>
       </div>
 
       {/* Search and Filter Row with Circle Dropdown */}
-      <div className="card" style={{ marginBottom: 'var(--space-6)', padding: 'var(--space-4)' }}>
-        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-            <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY-50%', color: 'var(--text-muted)' }} />
+      <div className="card" style={{ marginBottom: 'var(--space-4)', padding: 'clamp(10px, 2.5vw, 14px)' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: '1 1 180px', minWidth: '0', width: '100%' }}>
+            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
               type="text"
               className="form-input"
-              placeholder="Search by name, core skills (Verilog, RTOS, PCB, ARM), or company..."
+              placeholder="Search by name, skills (Verilog, RTOS, PCB), or company..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: '38px' }}
+              style={{ paddingLeft: '36px' }}
             />
           </div>
 
           {/* ECE Domain Circle Dropdown */}
-          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flex: '1 1 140px', minWidth: '0' }}>
             <select
               className="form-select"
               value={selectedCircle}
               onChange={(e) => setSelectedCircle(e.target.value)}
-              style={{ width: 'auto', minWidth: '170px' }}
+              style={{ width: '100%' }}
               title="Filter by ECE Domain Circle"
             >
               {ECE_CIRCLES.map(circle => (
@@ -360,25 +363,24 @@ export default function MyNetwork() {
           </div>
 
           {activeTab !== 'alumni' && (
-            <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-              <Filter size={16} style={{ color: 'var(--text-muted)' }} />
-              <select className="form-select" value={filterRole} onChange={(e) => setFilterRole(e.target.value)} style={{ width: 'auto' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flex: '1 1 120px', minWidth: '0' }}>
+              <select className="form-select" value={filterRole} onChange={(e) => setFilterRole(e.target.value)} style={{ width: '100%' }}>
                 <option value="all">All Roles</option>
-                <option value="student">Current Students</option>
+                <option value="student">Students</option>
                 <option value="alumni">Alumni Mentors</option>
                 <option value="faculty">Faculty</option>
               </select>
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-            <select className="form-select" value={filterBatch} onChange={(e) => setFilterBatch(e.target.value)} style={{ width: 'auto' }}>
-              <option value="all">All Batches (2026)</option>
-              <option value="2028">Batch 2028 (2nd Year • Sec A-E)</option>
-              <option value="2027">Batch 2027 (3rd Year • Sec A-C)</option>
-              <option value="2026">Batch 2026 (4th Year • Sec A-B)</option>
-              <option value="2025">Class of 2025 (Alumni)</option>
-              <option value="2024">Class of 2024 (Alumni)</option>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flex: '1 1 140px', minWidth: '0' }}>
+            <select className="form-select" value={filterBatch} onChange={(e) => setFilterBatch(e.target.value)} style={{ width: '100%' }}>
+              <option value="all">All Batches</option>
+              <option value="2028">Batch 2028 (2nd Yr)</option>
+              <option value="2027">Batch 2027 (3rd Yr)</option>
+              <option value="2026">Batch 2026 (4th Yr)</option>
+              <option value="2025">Class 2025 (Alumni)</option>
+              <option value="2024">Class 2024 (Alumni)</option>
             </select>
           </div>
         </div>
