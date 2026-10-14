@@ -66,7 +66,10 @@ export function findAll(table, filter = null) {
 }
 
 export function findById(table, id) {
-  return (database[table] || []).find(item => item.id === id);
+  if (!id) return null;
+  return (database[table] || []).find(item => 
+    item.id === id || item._id === id || String(item.id) === String(id) || String(item._id) === String(id)
+  );
 }
 
 export function findOne(table, filter) {
@@ -87,7 +90,10 @@ export function insert(table, record) {
 }
 
 export function update(table, id, updates) {
-  const index = (database[table] || []).findIndex(item => item.id === id);
+  if (!id) return null;
+  const index = (database[table] || []).findIndex(item => 
+    item.id === id || item._id === id || String(item.id) === String(id) || String(item._id) === String(id)
+  );
   if (index === -1) return null;
   database[table][index] = { ...database[table][index], ...updates, updated_at: new Date().toISOString() };
   saveDb();
@@ -108,7 +114,10 @@ export function updateWhere(table, filter, updates) {
 }
 
 export function remove(table, id) {
-  const index = (database[table] || []).findIndex(item => item.id === id);
+  if (!id) return false;
+  const index = (database[table] || []).findIndex(item => 
+    item.id === id || item._id === id || String(item.id) === String(id) || String(item._id) === String(id)
+  );
   if (index === -1) return false;
   database[table].splice(index, 1);
   saveDb();

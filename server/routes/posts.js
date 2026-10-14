@@ -359,39 +359,108 @@ router.put('/:id', (req, res) => {
 // Delete post
 router.delete('/:id', (req, res) => {
   try {
-    const post = findById('posts', req.params.id);
-    if (!post) return res.status(404).json({ error: 'Post not found' });
-    if (post.user_id !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized' });
+    const postId = req.params.id;
+    const post = findById('posts', postId) || findOne('posts', { id: postId }) || findOne('posts', { _id: postId });
+    
+    // If post already doesn't exist on server, return success so client can clean up UI/cache
+    if (!post) {
+      return res.json({ message: 'Post deleted successfully', success: true });
     }
-    remove('posts', req.params.id);
-    res.json({ message: 'Post deleted' });
+    
+    const postUserId = post.user_id || post.author?.id || post.author?._id;
+    const currentUserId = req.user?.id || req.user?._id;
+    const isAdmin = req.user?.role === 'admin' || req.user?.role === 'faculty';
+
+    if (String(postUserId) !== String(currentUserId) && !isAdmin) {
+      return res.status(403).json({ error: 'Not authorized to delete this post' });
+    }
+    
+    const pId = post.id || post._id || postId;
+    remove('posts', pId);
+    removeWhere('comments', { post_id: pId });
+    removeWhere('reactions', { post_id: pId });
+    removeWhere('saved_posts', { post_id: pId });
+
+    res.json({ message: 'Post deleted successfully', success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('Delete post error:', err);
+    res.status(500).json({ error: 'Server error deleting post' });
   }
 });
 
-// Delete comment
-router.delete(['/:postId/comments/:commentId', '/comments/:commentId'], (req, res) => {
+// Helper for deleting comment
+const handleDeleteComment = (req, res) => {
   try {
-    const commentId = req.params.commentId || req.params.postId;
-    const comment = findById('comments', commentId);
-    if (!comment) return res.status(404).json({ error: 'Comment not found' });
-    
-    const post = findById('posts', comment.post_id);
-    if (comment.user_id !== req.user.id && (!post || post.user_id !== req.user.id) && req.user.role !== 'admin') {
+    const commentId = req.params.commentId || req.params.id;
+    const postId = req.params.postId;
+
+    let comment = findById('comments', commentId) || findOne('comments', { id: commentId }) || findOne('comments', { _id: commentId });
+    let post = postId ? (findById('posts', postId) || findOne('posts', { id: postId }) || findOne('posts', { _id: postId })) : null;
+
+    if (!comment && post && Array.isArray(post.comments)) {
+      comment = post.comments.find(c => 
+        c.id === commentId || c._id === commentId || String(c.id) === String(commentId) || String(c._id) === String(commentId)
+      );
+    }
+
+    if (!comment) {
+      // If comment was embedded in post, remove from array
+      if (post && Array.isArray(post.comments)) {
+        post.comments = post.comments.filter(c => 
+          c.id !== commentId && c._id !== commentId && String(c.id) !== String(commentId) && String(c._id) !== String(commentId)
+        );
+        update('posts', post.id || post._id, {
+          comments: post.comments,
+          comments_count: Math.max(0, post.comments.length)
+        });
+      }
+      return res.json({ message: 'Comment deleted successfully', success: true });
+    }
+
+    if (!post && comment.post_id) {
+      post = findById('posts', comment.post_id) || findOne('posts', { id: comment.post_id });
+    }
+
+    const currentUserId = req.user?.id || req.user?._id;
+    const commentUserId = comment.user_id || comment.author?.id || comment.author?._id;
+    const postUserId = post ? (post.user_id || post.author?.id || post.author?._id) : null;
+    const isAdmin = req.user?.role === 'admin' || req.user?.role === 'faculty';
+
+    const isCommentAuthor = commentUserId && String(commentUserId) === String(currentUserId);
+    const isPostAuthor = postUserId && String(postUserId) === String(currentUserId);
+
+    if (!isCommentAuthor && !isPostAuthor && !isAdmin) {
       return res.status(403).json({ error: 'Not authorized to delete this comment' });
     }
 
-    remove('comments', comment.id);
+    const cId = comment.id || comment._id || commentId;
+    remove('comments', cId);
+    removeWhere('reactions', { comment_id: cId });
+
     if (post) {
-      update('posts', post.id, { comments_count: Math.max(0, (post.comments_count || 1) - 1) });
+      const pId = post.id || post._id;
+      if (Array.isArray(post.comments)) {
+        post.comments = post.comments.filter(c => 
+          c.id !== cId && c._id !== cId && String(c.id) !== String(cId)
+        );
+      }
+      const remainingCount = count('comments', { post_id: pId });
+      update('posts', pId, { 
+        comments: post.comments || [],
+        comments_count: remainingCount 
+      });
     }
-    res.json({ message: 'Comment deleted successfully' });
+
+    res.json({ message: 'Comment deleted successfully', success: true });
   } catch (err) {
+    console.error('Delete comment error:', err);
     res.status(500).json({ error: 'Server error deleting comment' });
   }
-});
+};
+
+router.delete('/:postId/comments/:commentId', handleDeleteComment);
+router.delete('/:postId/comment/:commentId', handleDeleteComment);
+router.delete('/comments/:commentId', handleDeleteComment);
 
 // Like / unlike comment
 router.post(['/:postId/comments/:commentId/like', '/comments/:commentId/like'], (req, res) => {

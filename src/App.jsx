@@ -63,7 +63,7 @@ export default function App() {
             <Route path="/projects" element={<PrivateRoute><ProjectBank /></PrivateRoute>} />
             <Route path="/jobs" element={<PrivateRoute><JobsInternships /></PrivateRoute>} />
             <Route path="/hackathons" element={<PrivateRoute><HackathonsIncubation /></PrivateRoute>} />
-            <Route path="/communities" element={<PrivateRoute><Communities /></PrivateRoute>} />
+            <Route path="/communities" element={<Navigate to="/hackathons" replace />} />
             <Route path="/messages" element={<PrivateRoute><Messages /></PrivateRoute>} />
             <Route path="/messages/:id" element={<PrivateRoute><Messages /></PrivateRoute>} />
             <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />

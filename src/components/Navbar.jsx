@@ -49,7 +49,6 @@ export default function Navbar() {
     { path: '/projects', icon: Cpu, label: 'Project Bank', badgeKey: 'projects' },
     { path: '/jobs', icon: Briefcase, label: 'Opportunities', badgeKey: 'jobs' },
     { path: '/hackathons', icon: Rocket, label: 'Hackathons' },
-    { path: '/communities', icon: Users, label: 'Communities', badgeKey: 'communities' },
   ];
 
   const getInitials = (name) => {
@@ -168,9 +167,6 @@ export default function Navbar() {
                   <div style={{ padding: '4px 16px', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                     Quick Access
                   </div>
-                  <Link to="/communities" className="dropdown-item" onClick={() => setShowProfile(false)}>
-                    <Users size={16} /> Communities & Circles
-                  </Link>
                   <Link to="/projects" className="dropdown-item" onClick={() => setShowProfile(false)}>
                     <Cpu size={16} /> Project Bank
                   </Link>

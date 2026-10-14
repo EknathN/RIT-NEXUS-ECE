@@ -6,10 +6,17 @@
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
+  max-width: 100%;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .rit-logo-img {
   display: block;
+  height: var(--logo-height, 36px);
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -19,6 +26,40 @@
 
 .rit-logo-wrapper:hover .rit-logo-img {
   transform: scale(1.02);
+}
+
+.rit-logo-badge {
+  background: linear-gradient(135deg, var(--accent-500, #0094ff), var(--cyan-500, #00d9ff));
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+  display: inline-block;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .rit-logo-badge {
+    display: none !important;
+  }
+  .rit-logo-img {
+    height: clamp(24px, 6vw, 30px) !important;
+    max-width: clamp(110px, 38vw, 160px) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .rit-logo-badge {
+    display: none !important;
+  }
+  .rit-logo-img {
+    height: clamp(22px, 5.5vw, 26px) !important;
+    max-width: clamp(95px, 34vw, 135px) !important;
+  }
 }
 
 /* Light Mode: display dark text logo, hide white text logo */

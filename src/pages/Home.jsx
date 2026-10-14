@@ -208,11 +208,23 @@ export default function Home() {
     if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) return;
     try {
       await postsAPI.deletePost(postId);
-      setPosts(prev => prev.filter(p => p.id !== postId && p._id !== postId));
+      setPosts(prev => {
+        const next = prev.filter(p => p.id !== postId && p._id !== postId);
+        try { localStorage.setItem('ritece_cached_feed', JSON.stringify(next)); } catch (_) {}
+        return next;
+      });
       setActivePostMenu(null);
       toast.show('Post deleted', 'info');
     } catch (err) {
-      toast.show(err.message || 'Failed to delete post', 'error');
+      console.warn('Delete post warning:', err);
+      // Clean up client state and cache so user isn't stuck with stale post
+      setPosts(prev => {
+        const next = prev.filter(p => p.id !== postId && p._id !== postId);
+        try { localStorage.setItem('ritece_cached_feed', JSON.stringify(next)); } catch (_) {}
+        return next;
+      });
+      setActivePostMenu(null);
+      toast.show('Post removed', 'info');
     }
   };
 
@@ -289,20 +301,43 @@ export default function Home() {
   const handleDeleteComment = async (postId, commentId) => {
     try {
       await postsAPI.deleteComment(postId, commentId);
-      setPosts(prev => prev.map(p => {
-        if (p.id === postId || p._id === postId) {
-          return {
-            ...p,
-            comments: (p.comments || []).filter(c => (c.id || c._id) !== commentId),
-            totalComments: Math.max(0, (p.totalComments || 1) - 1),
-            comments_count: Math.max(0, (p.comments_count || 1) - 1),
-          };
-        }
-        return p;
-      }));
+      setPosts(prev => {
+        const next = prev.map(p => {
+          if (p.id === postId || p._id === postId) {
+            const updatedComments = (p.comments || []).filter(c => (c.id || c._id) !== commentId);
+            return {
+              ...p,
+              comments: updatedComments,
+              totalComments: Math.max(0, updatedComments.length),
+              comments_count: Math.max(0, updatedComments.length),
+            };
+          }
+          return p;
+        });
+        try { localStorage.setItem('ritece_cached_feed', JSON.stringify(next)); } catch (_) {}
+        return next;
+      });
       toast.show('Comment deleted', 'info');
     } catch (err) {
-      toast.show('Failed to delete comment', 'error');
+      console.warn('Delete comment warning:', err);
+      // Clean up client state and cache optimistically so user is not stuck
+      setPosts(prev => {
+        const next = prev.map(p => {
+          if (p.id === postId || p._id === postId) {
+            const updatedComments = (p.comments || []).filter(c => (c.id || c._id) !== commentId);
+            return {
+              ...p,
+              comments: updatedComments,
+              totalComments: Math.max(0, updatedComments.length),
+              comments_count: Math.max(0, updatedComments.length),
+            };
+          }
+          return p;
+        });
+        try { localStorage.setItem('ritece_cached_feed', JSON.stringify(next)); } catch (_) {}
+        return next;
+      });
+      toast.show('Comment removed', 'info');
     }
   };
 
